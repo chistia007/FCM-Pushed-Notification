@@ -1,5 +1,15 @@
 <resources>
     <string name="app_name">FCM</string>
     <string name="default_notification_channel_id">PushNotifications</string>
+
+
+    <string name="add_task">Add Task</string>
+    <string name="task_added_message">Task added successfully!</string>
+    <string name="add_task_dialog_title">Add Task</string>
+    <string name="add_task_dialog_message">Enter task details:</string>
+    <string name="add_task_dialog_add_button">Add</string>
+    <string name="add_task_dialog_cancel_button">Cancel</string>
+    <string name="edit_text_title_hint">Title</string>
+    <string name="edit_text_description_hint">Description</string>
 </resources>
 
