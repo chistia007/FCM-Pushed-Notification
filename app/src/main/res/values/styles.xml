@@ -1,0 +1,27 @@
+<resources>
+
+    <style name="Widget.FCM.AppWidget.Container" parent="android:Widget">
+        <item name="android:id">@android:id/background</item>
+        <item name="android:background">?android:attr/colorBackground</item>
+    </style>
+
+    <style name="Widget.FCM.AppWidget.InnerView" parent="android:Widget">
+        <item name="android:background">?android:attr/colorBackground</item>
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
+    </style>
+
+    <style name="AlertDialogAnimation">
+        <item name="android:background">#534B4B</item>
+        <item name="android:windowEnterAnimation">@anim/slide_in_bottom</item>
+        <item name="android:windowExitAnimation">@anim/slide_out_bottom</item>
+    </style>
+
+    <style name="MyAlertDialogTheme"  parent="Theme.MaterialComponents.Light.Dialog.Alert">
+        <item name="android:background">#534B4B</item>
+        <item name="android:textColor">#FFF</item>
+        <item name="android:gravity">bottom</item>
+    </style>
+
+
+
+</resources>

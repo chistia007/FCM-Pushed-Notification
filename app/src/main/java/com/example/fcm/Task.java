@@ -23,7 +23,17 @@ public class Task {
         return dueDate;
     }
 
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setDueDate(String dueDate) {
+        this.dueDate = dueDate;
+    }
 
     // getters and setters for title, description, and dueDate
 }

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group
+        android:id="@+id/group1"
+        android:checkableBehavior="single">
+        <item android:title="Task">
+            <menu>
+
+                <item
+                    android:id="@+id/DashBoard"
+                    android:icon="@drawable/ic_menu"
+                    android:title="Dashboard" />
+                <item
+                    android:id="@+id/HowToUse"
+                    android:icon="@drawable/ic_menu"
+                    android:title="How to Use" />
+                <item
+                    android:id="@+id/RepeatCalculator"
+                    android:icon="@drawable/ic_menu"
+                    android:title="Repeat Calculator" />
+                <item
+                    android:id="@+id/updateDashboard"
+                    android:icon="@drawable/ic_menu"
+                    android:title="Update Dashboard Manually" />
+
+                <item
+                    android:id="@+id/learnAppDev"
+                    android:icon="@drawable/ic_menu"
+                    android:title="Learn App Development" />
+
+            </menu>
+
+        </item>
+
+    </group>
+
+    <group
+        android:id="@+id/group2"
+        android:checkableBehavior="single">
+        <item android:title="More App">
+
+            <menu>
+                <item
+                    android:id="@+id/shareApp"
+                    android:icon="@drawable/ic_menu"
+                    android:title="Share App" />
+
+                <item
+                    android:id="@+id/logOut"
+                    android:icon="@drawable/ic_menu"
+                    android:title="Log out" />
+            </menu>
+
+        </item>
+
+    </group>
+
+</menu>

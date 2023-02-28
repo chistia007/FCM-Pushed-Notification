@@ -31,18 +31,16 @@ public class AlarmReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         // Get the task information from the intent
-        String taskTitle = intent.getStringExtra("taskTitle");
-        String taskDescription = intent.getStringExtra("taskDescription");
+         taskTitle = intent.getStringExtra("taskTitle");
+         taskDescription = intent.getStringExtra("taskDescription");
 
         Intent notificationIntent = new Intent(context, ToDoActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
-
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_MUTABLE);
 
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Create the notification channel for Android Oreo and higher
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME,
-                    NotificationManager.IMPORTANCE_HIGH);
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH);
             channel.setDescription(CHANNEL_DESCRIPTION);
             channel.enableLights(true);
             channel.setLightColor(Color.GREEN);
@@ -52,18 +50,18 @@ public class AlarmReceiver extends BroadcastReceiver {
 
         // Create a notification and show it
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_launcher_background)
+                .setSmallIcon(R.drawable.ic_add_tasks)
                 .setContentTitle(taskTitle)
                 .setContentText(taskDescription)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-                .setChannelId(CHANNEL_ID)
+               // .setChannelId(CHANNEL_ID)
                 .setAutoCancel(true);
 
 
 
 
-        notificationManager.notify(0, builder.build());
+        notificationManager.notify(1, builder.build());
 
     }
 
