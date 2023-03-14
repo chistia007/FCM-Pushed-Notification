@@ -27,7 +27,7 @@ public class NewAppWidget extends AppWidgetProvider {
             @SuppressLint("RemoteViewLayout") RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.new_app_widget);
             Database db = new Database(context);
 
-            Cursor t = db.getInfo();
+            Cursor t = db.getInfo("allTasks");
             if (t.getCount() == 0) {
                 Toast.makeText(context, "No data found", Toast.LENGTH_SHORT).show();
             } else {

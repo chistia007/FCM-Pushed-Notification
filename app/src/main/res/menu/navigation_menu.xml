@@ -21,7 +21,7 @@
                     android:icon="@drawable/ic_house_work"
                     android:title="HOUSE WORK" />
                 <item
-                    android:id="@+id/leaning"
+                    android:id="@+id/learning"
                     android:icon="@drawable/ic_learning"
                     android:title="LEARNING" />
 

@@ -21,6 +21,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.TimePicker;
@@ -28,6 +30,7 @@ import android.widget.Toast;
 
 import com.example.fcm.databinding.ActivityToDoBinding;
 import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.textfield.TextInputLayout;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -44,7 +47,7 @@ public class ToDoActivity extends AppCompatActivity {
     EditText titleEditText;
     EditText descriptionEditText;
     EditText dueDateEditText;
-
+    AutoCompleteTextView dropDowns;
     AlarmManager alarmManager;
 
     Database db;
@@ -57,12 +60,16 @@ public class ToDoActivity extends AppCompatActivity {
     OnItemClickListener listener;
     RecyclerView taskList;
     LinearLayoutManager layoutManager;
+    public String selectTable;
+    private String select;
+
     @SuppressLint("NotifyDataSetChanged")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding=ActivityToDoBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
 
 
         db=new Database(this);
@@ -78,7 +85,7 @@ public class ToDoActivity extends AppCompatActivity {
 
 
 
-        t = db.getInfo();
+        t = db.getInfo(selectTable=navigationDrawer()); //t is Cursor
         if (t.getCount() == 0) {
             Toast.makeText(ToDoActivity.this, "No data founded", Toast.LENGTH_SHORT).show();
         } else {
@@ -148,7 +155,7 @@ public class ToDoActivity extends AppCompatActivity {
 
 
 
-        t = db.getInfo();
+        t = db.getInfo(selectTable);
         if (t.getCount() == 0) {
             Toast.makeText(ToDoActivity.this, "No data founded", Toast.LENGTH_SHORT).show();
         } else {
@@ -162,67 +169,57 @@ public class ToDoActivity extends AppCompatActivity {
             }
         }
 
-        navigationDrawer();
+
 
     }
 
-    private void navigationDrawer() {
+    @SuppressLint("NonConstantResourceId")
+    private String navigationDrawer() {
+        this.selectTable = "all";
 
         DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.nav_View);
 
-
-        // Navigation Drawer------------------------------
-
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(ToDoActivity.this, drawerLayout, R.string.open, R.string.close);
+        // Set up ActionBarDrawerToggle and add it to DrawerLayout
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                ToDoActivity.this,
+                drawerLayout,
+                R.string.open,
+                R.string.close);
         drawerLayout.addDrawerListener(toggle);
         toggle.syncState();
-        //getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        // Drawer click event
-        // Drawer item Click event ------
+        // Set up NavigationView
         navigationView.setNavigationItemSelectedListener(item -> {
-
             switch (item.getItemId()) {
-                case R.id.allTasks:
-                   // Toast.makeText(CgpaBracuCalculatorActivity.this, "Your Dashboard", Toast.LENGTH_SHORT).show();
-                    drawerLayout.closeDrawers();
-                    break;
-
-//                case R.id.allTasks:
-//                    //startActivity(new Intent(CgpaBracuCalculatorActivity.this,RepeatCalculation.class));
-//                    break;
-//
-//                case R.id.allTasks:
-//                    //startActivity(new Intent(CgpaBracuCalculatorActivity.this,UpdateDashboard.class));
-//                    break;
-//
-//
-//                case R.id.officeWorks:
-//                    //startActivity(new Intent(CgpaBracuCalculatorActivity.this,HowToUSe.class));
-//                    break;
-//
-//                case R.id.officeWorks:
-//                    //startActivity(new Intent(CgpaBracuCalculatorActivity.this,LearnAppDev.class));
-//                    break;
-//                case R.id.officeWorks:
-//                    //startActivity(new Intent(CgpaBracuCalculatorActivity.this,ShareWebsite.class));
-//                    break;
-
                 case R.id.officeWorks:
-                    //startActivity(new Intent(CgpaBracuCalculatorActivity.this,StartActivity.class));
+                    this.selectTable="office";
                     break;
-
+                case R.id.houseWork:
+                    this.selectTable = "house";
+                    break;
+                case R.id.learning:
+                    this.selectTable = "learning";
+                    break;
+                case R.id.extra_curr:
+                    this.selectTable = "extra";
+                    break;
+                default:
+                    this.selectTable = "all";
+                    break;
             }
 
-            return false;
+            // Close the navigation drawer
+            drawerLayout.closeDrawer(GravityCompat.START);
+
+            return true;
         });
-        //------------------------------
 
-        // ------------------------
-        // App Bar Click Event
-
+        // Set up AppBar click event to open the navigation drawer
         binding.imageMenu.setOnClickListener(view -> drawerLayout.openDrawer(GravityCompat.START));
+
+        // Return the updated selectTable value
+        return this.selectTable;
     }
 
 
@@ -240,6 +237,25 @@ public class ToDoActivity extends AppCompatActivity {
         titleEditText = view.findViewById(R.id.edit_text_title);
         descriptionEditText = view.findViewById(R.id.edit_text_description);
         dueDateEditText = view.findViewById(R.id.edit_text_due_date);
+        dropDowns=view.findViewById(R.id.dropDownText);
+
+
+
+        String items[]=new String[]{
+                "allTasks",
+                "office",
+                "house",
+                "learning",
+                "extra"
+        };
+
+        ArrayAdapter<String> adapter= new ArrayAdapter<>(
+                ToDoActivity.this,
+                R.layout.drop_down_text,
+                items
+        );
+
+        dropDowns.setAdapter(adapter);
 
 
 
@@ -259,14 +275,14 @@ public class ToDoActivity extends AppCompatActivity {
                 String dueDate = dueDateEditText.getText().toString();
 
 
-                k=db.insert_data(taskTitle,taskDescription,dueDate);
+                k=db.insert_data(dropDowns.getText().toString(),taskTitle,taskDescription,dueDate);
                 if(k!=0){
                     Toast.makeText(ToDoActivity.this, "Successfully data Inserted", Toast.LENGTH_SHORT).show();
                 }
                 else{Toast.makeText(ToDoActivity.this, "Insertion failed", Toast.LENGTH_SHORT).show();}
 
 
-                t=db.getInfo();
+                t=db.getInfo(selectTable);
                 tasks.clear();
                 while(t.moveToNext()){
                     task = new Task(t.getLong(0), t.getString(1), t.getString(2),t.getString(3),checked);
@@ -385,7 +401,7 @@ public class ToDoActivity extends AppCompatActivity {
                     else{Toast.makeText(ToDoActivity.this, "Insertion failed", Toast.LENGTH_SHORT).show();}
                 }
 
-                t=db.getInfo();
+                t=db.getInfo(selectTable);
                 tasks.clear();
                 if(t.getCount()==0){
                     Toast.makeText(ToDoActivity.this, "No data founded", Toast.LENGTH_SHORT).show();
@@ -464,6 +480,14 @@ public class ToDoActivity extends AppCompatActivity {
         // Show the AlertDialog
         AlertDialog dialog = builder.create();
         dialog.show();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (t != null) {
+            t.close();   //t is Cursor
+        }
     }
 }
 
