@@ -46,33 +46,38 @@ public class Database extends SQLiteOpenHelper {
         Cursor cursor=db.rawQuery("select * from tasks ",null);
         return cursor;
     }
-    // Update database(name and password using username)
-//    public boolean updateData(String title,String description, String dueDate){
-//        SQLiteDatabase db=this.getWritableDatabase();
-//        ContentValues c= new ContentValues();
-//        c.put("title",title);
-//        c.put("description",description);
-//        c.put("dueDate",dueDate);
-//        Cursor cursor=db.rawQuery("select * from users where username=?",new String[]{username});
-//        if (cursor.getCount()>0){
-//            long r=db.update("users",c,"username=?",new String[]{username});
-//            if (r==-1) return false;
-//            else return true;
-//        }
-//        else return false;
-//
-//    }
-//
-//    //Delete a data
-//    public boolean deleteData(String username){
-//        SQLiteDatabase db=this.getWritableDatabase();
-//        Cursor cursor=db.rawQuery("select * from users where username=?",new String[]{username});
-//        if (cursor.getCount()>0){
-//            long r=db.delete("users","username=?",new String[]{username});
-//            if (r==-1) return false;
-//            else return true;
-//        }
-//        else return false;
-//    }
+//     Update database(name and password using username)
+    public boolean updateDatabase(long _id, String title, String description, String dueDate) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues c = new ContentValues();
+        c.put("title", title);
+        c.put("description", description);
+        c.put("dueDate", dueDate);
+
+        // Specify the selection criteria as the _id field
+        String selection = "_id=?";
+        String[] selectionArgs = new String[]{String.valueOf(_id)};
+
+        // Update the row with the specified _id
+        int numRowsAffected = db.update("tasks", c, selection, selectionArgs);
+
+        return numRowsAffected > 0;
+}
+    //Delete a data
+    public boolean deleteData(long id){
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery("SELECT * FROM users WHERE _id=?", new String[]{String.valueOf(id)});
+        if (cursor.getCount() > 0){
+            long r = db.delete("users", "_id=?", new String[]{String.valueOf(id)});
+            if (r == -1) {
+                return false;
+            } else {
+                return true;
+            }
+        } else {
+            return false;
+        }
+    }
+
 
 }

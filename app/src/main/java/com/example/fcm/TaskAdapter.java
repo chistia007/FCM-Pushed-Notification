@@ -1,14 +1,19 @@
 package com.example.fcm;
 
 import android.annotation.SuppressLint;
+import android.content.ClipData;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+
+import com.google.android.material.animation.AnimatableView;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -19,7 +24,7 @@ import java.util.Locale;
 public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder> {
 
     private List<Task> tasks;
-    private OnItemClickListener listener;
+    private static OnItemClickListener listener;
     public TaskAdapter(List<Task> tasks,  OnItemClickListener listener) {
         this.tasks = tasks;
         this.listener = listener;
@@ -41,6 +46,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
         holder.taskNameTextView.setText(task.getTitle());
         holder.taskDesc.setText(task.getDescription());
         holder.dueTimeTextView.setText(task.getDueDate());
+        holder.checkBox.setChecked(task.isChecked());
 
         //Here, we set an OnClickListener on the item view, and call the onItemClick method of the listener when the view is clicked.
         holder.itemView.setOnClickListener(new View.OnClickListener() {
@@ -50,13 +56,15 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
             }
         });
 
-//        DateFormat formatter = new SimpleDateFormat("d-MMM-yyyy,HH:mm:ss aaa");
-//        Date date = formatter.parse(dDate);
-//        System.out.println(date);
+        //Here, we set an OnClickListener on the checkbox, and call the onItemClick method of the listener when the checkbox is clicked.
+        holder.checkBox.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                task.setComplete(holder.checkBox.isChecked());
+            }
+        });
 
-        // Format the due time as a string and display it in the TextView
-//        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
-//        String dueTimeString = dateFormat.format(new Date(task.getDueDate()));
+
 
     }
 
@@ -77,13 +85,19 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
 
         TextView taskDesc;
 
+        CheckBox checkBox;
+
 
         TaskViewHolder(@NonNull View itemView) {
             super(itemView);
             taskNameTextView = itemView.findViewById(R.id.task_name);
             dueTimeTextView = itemView.findViewById(R.id.due_time);
             taskDesc= itemView.findViewById(R.id.task_desc);
+            checkBox = itemView.findViewById(R.id.task_checkbox);
+
+
         }
+
     }
 }
 

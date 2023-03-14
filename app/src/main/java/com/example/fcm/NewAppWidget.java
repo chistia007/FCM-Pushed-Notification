@@ -9,9 +9,6 @@ import android.database.Cursor;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,7 +33,7 @@ public class NewAppWidget extends AppWidgetProvider {
             } else {
                 tasks.clear(); // clear previous tasks
                 while (t.moveToNext()) {
-                    Task task = new Task(t.getString(1), t.getString(2), t.getString(3));
+                    Task task = new Task(t.getLong(0), t.getString(1), t.getString(2), t.getString(3),false);
                     tasks.add(task);
                 }
 

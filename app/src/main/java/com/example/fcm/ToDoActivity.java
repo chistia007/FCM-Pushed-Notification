@@ -10,8 +10,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
-import android.appwidget.AppWidgetManager;
-import android.content.ComponentName;
 import android.database.Cursor;
 import android.app.AlarmManager;
 import android.app.DatePickerDialog;
@@ -19,14 +17,12 @@ import android.app.PendingIntent;
 import android.app.TimePickerDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.DatePicker;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
@@ -55,9 +51,12 @@ public class ToDoActivity extends AppCompatActivity {
 
     Task task;
     Cursor t;
-    long i;
+    boolean i;
+    long k;
+    Boolean checked=false;
     OnItemClickListener listener;
     RecyclerView taskList;
+    LinearLayoutManager layoutManager;
     @SuppressLint("NotifyDataSetChanged")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,21 +71,26 @@ public class ToDoActivity extends AppCompatActivity {
         taskList = findViewById(R.id.task_list);
         taskAdapter = new TaskAdapter(tasks,listener);
         taskList.setAdapter(taskAdapter);
-        taskList.setLayoutManager(new LinearLayoutManager(this));
+        layoutManager = new LinearLayoutManager(this);
+        layoutManager.setReverseLayout(true);
+        layoutManager.setStackFromEnd(true);
+        taskList.setLayoutManager(layoutManager);
 
-        t=db.getInfo();
-        if(t.getCount()==0){
+
+
+        t = db.getInfo();
+        if (t.getCount() == 0) {
             Toast.makeText(ToDoActivity.this, "No data founded", Toast.LENGTH_SHORT).show();
-        }
-        else{
+        } else {
             tasks.clear();
-            while(t.moveToNext()){
-                task = new Task(t.getString(1), t.getString(2), t.getString(3));
-                tasks.add(task);
+            int index = 0; // keep track of the current index
+            while (t.moveToNext()) {
+                task = new Task(t.getLong(0), t.getString(1), t.getString(2), t.getString(3), checked);
+                tasks.add(index, task); // add the new item at the current index
+                taskAdapter.notifyItemInserted(index); // notify the adapter of the new item
+                index++; // increment the index for the next item
             }
         }
-
-        taskAdapter.notifyDataSetChanged();
 
 
 
@@ -106,17 +110,60 @@ public class ToDoActivity extends AppCompatActivity {
             @Override
             public void onItemClick(View view, int position) {
                 Task task = tasks.get(position);
+                long line0=task.get_id(position);
                 String line1 = task.getTitle();
                 String line2 = task.getDescription();
                 String line3 = task.getDueDate();
-                UpdateTaskInDialog(line1,line2,line3);
+                UpdateTaskInDialog(line0,line1,line2,line3);
             }
+            @Override
+            public void onCheckboxClick(View view, int position, boolean isChecked) {
+                Task task = tasks.get(position);
+                task.setComplete(isChecked);
+                Toast.makeText(ToDoActivity.this, "checked", Toast.LENGTH_SHORT).show();
+                if (isChecked) {
+                    // delete task from database using auto-incremented ID
+                    Boolean s=db.deleteData(task.get_id(position));
+                    if(s){
+                        Toast.makeText(ToDoActivity.this, "done del", Toast.LENGTH_SHORT).show();
+                    }
+                    // remove task from list and notify adapter
+                    tasks.remove(position);
+                    taskAdapter.notifyItemRemoved(position);
+                }
+            }
+
+
         };
 
-        TaskAdapter adapter = new TaskAdapter(tasks, listener);
-        taskList.setAdapter(adapter);
+
+
+        taskList = findViewById(R.id.task_list);
+        taskAdapter = new TaskAdapter(tasks,listener);
+        taskList.setAdapter(taskAdapter);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        layoutManager.setReverseLayout(true);
+        layoutManager.setStackFromEnd(true);
+        taskList.setLayoutManager(layoutManager);
+
+
+
+        t = db.getInfo();
+        if (t.getCount() == 0) {
+            Toast.makeText(ToDoActivity.this, "No data founded", Toast.LENGTH_SHORT).show();
+        } else {
+            tasks.clear();
+            int index = 0; // keep track of the current index
+            while (t.moveToNext()) {
+                task = new Task(t.getLong(0), t.getString(1), t.getString(2), t.getString(3), checked);
+                tasks.add(index, task); // add the new item at the current index
+                taskAdapter.notifyItemInserted(index); // notify the adapter of the new item
+                index++; // increment the index for the next item
+            }
+        }
 
         navigationDrawer();
+
     }
 
     private void navigationDrawer() {
@@ -137,32 +184,32 @@ public class ToDoActivity extends AppCompatActivity {
         navigationView.setNavigationItemSelectedListener(item -> {
 
             switch (item.getItemId()) {
-                case R.id.DashBoard:
+                case R.id.allTasks:
                    // Toast.makeText(CgpaBracuCalculatorActivity.this, "Your Dashboard", Toast.LENGTH_SHORT).show();
                     drawerLayout.closeDrawers();
                     break;
 
-                case R.id.RepeatCalculator:
-                    //startActivity(new Intent(CgpaBracuCalculatorActivity.this,RepeatCalculation.class));
-                    break;
+//                case R.id.allTasks:
+//                    //startActivity(new Intent(CgpaBracuCalculatorActivity.this,RepeatCalculation.class));
+//                    break;
+//
+//                case R.id.allTasks:
+//                    //startActivity(new Intent(CgpaBracuCalculatorActivity.this,UpdateDashboard.class));
+//                    break;
+//
+//
+//                case R.id.officeWorks:
+//                    //startActivity(new Intent(CgpaBracuCalculatorActivity.this,HowToUSe.class));
+//                    break;
+//
+//                case R.id.officeWorks:
+//                    //startActivity(new Intent(CgpaBracuCalculatorActivity.this,LearnAppDev.class));
+//                    break;
+//                case R.id.officeWorks:
+//                    //startActivity(new Intent(CgpaBracuCalculatorActivity.this,ShareWebsite.class));
+//                    break;
 
-                case R.id.updateDashboard:
-                    //startActivity(new Intent(CgpaBracuCalculatorActivity.this,UpdateDashboard.class));
-                    break;
-
-
-                case R.id.HowToUse:
-                    //startActivity(new Intent(CgpaBracuCalculatorActivity.this,HowToUSe.class));
-                    break;
-
-                case R.id.learnAppDev:
-                    //startActivity(new Intent(CgpaBracuCalculatorActivity.this,LearnAppDev.class));
-                    break;
-                case R.id.shareApp:
-                    //startActivity(new Intent(CgpaBracuCalculatorActivity.this,ShareWebsite.class));
-                    break;
-
-                case R.id.logOut:
+                case R.id.officeWorks:
                     //startActivity(new Intent(CgpaBracuCalculatorActivity.this,StartActivity.class));
                     break;
 
@@ -212,8 +259,8 @@ public class ToDoActivity extends AppCompatActivity {
                 String dueDate = dueDateEditText.getText().toString();
 
 
-                i=db.insert_data(taskTitle,taskDescription,dueDate);
-                if(i!=0){
+                k=db.insert_data(taskTitle,taskDescription,dueDate);
+                if(k!=0){
                     Toast.makeText(ToDoActivity.this, "Successfully data Inserted", Toast.LENGTH_SHORT).show();
                 }
                 else{Toast.makeText(ToDoActivity.this, "Insertion failed", Toast.LENGTH_SHORT).show();}
@@ -222,7 +269,7 @@ public class ToDoActivity extends AppCompatActivity {
                 t=db.getInfo();
                 tasks.clear();
                 while(t.moveToNext()){
-                    task = new Task(t.getString(1), t.getString(2), t.getString(3));
+                    task = new Task(t.getLong(0), t.getString(1), t.getString(2),t.getString(3),checked);
                     tasks.add(task);
                 }
                 taskAdapter.notifyDataSetChanged();
@@ -295,7 +342,7 @@ public class ToDoActivity extends AppCompatActivity {
     }
 
 
-    private void UpdateTaskInDialog(String line1, String line2, String line3) {
+    private void UpdateTaskInDialog(long id, String line1, String line2, String line3) {
         // Create an AlertDialog builder and set the title and message
         AlertDialog.Builder builder = new AlertDialog.Builder(this,R.style.MyAlertDialogTheme);
         builder.setTitle(R.string.add_task_dialog_title);
@@ -331,19 +378,20 @@ public class ToDoActivity extends AppCompatActivity {
                     Toast.makeText(ToDoActivity.this, "You can not leave any field empty", Toast.LENGTH_SHORT).show();
                 }
                 else{
-                    i=db.insert_data(taskTitle,taskDescription,dueDate);
-                    if(i!=0){
+                    i=db.updateDatabase(id,taskTitle,taskDescription,dueDate);
+                    if(i){
                         Toast.makeText(ToDoActivity.this, "Successfully data Inserted", Toast.LENGTH_SHORT).show();
                     }
                     else{Toast.makeText(ToDoActivity.this, "Insertion failed", Toast.LENGTH_SHORT).show();}
                 }
 
                 t=db.getInfo();
+                tasks.clear();
                 if(t.getCount()==0){
                     Toast.makeText(ToDoActivity.this, "No data founded", Toast.LENGTH_SHORT).show();
                 }
                 while(t.moveToNext()){
-                    task = new Task(t.getString(1), t.getString(2), t.getString(3));
+                    task = new Task(t.getLong(0), t.getString(1), t.getString(2), t.getString(3),checked);
                     tasks.add(task);
                 }
 

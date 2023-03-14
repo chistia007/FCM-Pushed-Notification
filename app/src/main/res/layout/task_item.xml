@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-
 <RelativeLayout  xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@drawable/recycler_item_design"
+    android:layout_marginTop="10dp"
+    android:layout_marginRight="5dp"
+    android:layout_marginLeft="5dp">
 
     <CheckBox
         android:id="@+id/task_checkbox"
@@ -43,10 +45,10 @@
             android:textSize="12sp"
             android:textColor="#FFF"/>
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="#C5C5C5"/>
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="1dp"-->
+<!--            android:background="#C5C5C5"/>-->
 
     </LinearLayout>
 

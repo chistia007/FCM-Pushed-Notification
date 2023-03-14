@@ -49,12 +49,22 @@ public class AlarmReceiver extends BroadcastReceiver {
         }
 
         // Create a notification and show it
+        Intent actionButtonIntent = new Intent(context, ToDoActivity.class);
+        actionButtonIntent.setAction("ACTION_NAME");
+
+// Create the PendingIntent for the action button
+        PendingIntent actionPendingIntent = PendingIntent.getActivity(context, 0, actionButtonIntent, PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_MUTABLE);
+
+// Create the action button and add it to the notification
+        NotificationCompat.Action action = new NotificationCompat.Action.Builder(R.drawable.ic_action_name, "visit", actionPendingIntent).build();
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_add_tasks)
                 .setContentTitle(taskTitle)
                 .setContentText(taskDescription)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                .addAction(action)
                // .setChannelId(CHANNEL_ID)
                 .setAutoCancel(true);
 

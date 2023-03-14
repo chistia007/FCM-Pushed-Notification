@@ -12,7 +12,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        >
         <RelativeLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -52,7 +53,14 @@
 
             </LinearLayout>
 
+
         </RelativeLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#C5C5C5"/>
+
 
         <!-- Add a RecyclerView to show the list of tasks -->
         <androidx.recyclerview.widget.RecyclerView
@@ -82,7 +90,10 @@
         android:layout_height="match_parent"
         android:layout_gravity="start"
         app:headerLayout="@layout/drawar_head_layout"
-        app:menu="@menu/navigation_menu"/>
+        app:menu="@menu/navigation_menu"
+        android:background="#E6534B4B"
+        app:itemTextColor="#202020"
+/>
 
 </androidx.drawerlayout.widget.DrawerLayout>
 

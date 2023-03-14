@@ -4,11 +4,27 @@ public class Task {
     private String title;
     private String description;
     private String dueDate;
+    private long _id;
+    private boolean isChecked;
 
-    public Task(String title, String description, String dueDate) {
+    public boolean isChecked() {
+        return isChecked;
+    }
+
+    public void setChecked(boolean checked) {
+        isChecked = checked;
+    }
+
+    public Task(long _id, String title, String description, String dueDate, boolean isChecked) {
         this.title = title;
         this.description = description;
         this.dueDate = dueDate;
+        this._id=_id;
+        this.isChecked = isChecked;
+    }
+
+    public long get_id(int position) {
+        return _id;
     }
 
     public String getTitle() {
@@ -33,6 +49,10 @@ public class Task {
 
     public void setDueDate(String dueDate) {
         this.dueDate = dueDate;
+    }
+
+    public void setComplete(boolean checked) {
+        isChecked = checked;
     }
 
     // getters and setters for title, description, and dueDate
