@@ -46,7 +46,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
         holder.taskNameTextView.setText(task.getTitle());
         holder.taskDesc.setText(task.getDescription());
         holder.dueTimeTextView.setText(task.getDueDate());
-        holder.checkBox.setChecked(task.isChecked());
+       // holder.checkBox.setChecked(task.isChecked());
 
         //Here, we set an OnClickListener on the item view, and call the onItemClick method of the listener when the view is clicked.
         holder.itemView.setOnClickListener(new View.OnClickListener() {
@@ -57,12 +57,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
         });
 
         //Here, we set an OnClickListener on the checkbox, and call the onItemClick method of the listener when the checkbox is clicked.
-        holder.checkBox.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                task.setComplete(holder.checkBox.isChecked());
-            }
-        });
+        holder.bind(task, listener);
 
 
 
@@ -76,6 +71,9 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
     public void addTask(Task task) {
         tasks.add(task);
         notifyItemInserted(tasks.size() - 1);
+    }
+
+    public void setTasks(List<Task> tasks) {
     }
 
     static class TaskViewHolder extends RecyclerView.ViewHolder {
@@ -96,6 +94,13 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
             checkBox = itemView.findViewById(R.id.task_checkbox);
 
 
+        }
+        public void bind(Task task, OnItemClickListener listener) {
+
+            checkBox.setChecked(task.isChecked());
+            checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                listener.onCheckboxClick(itemView, getAdapterPosition(), isChecked);
+            });
         }
 
     }

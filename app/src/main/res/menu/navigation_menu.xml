@@ -30,6 +30,11 @@
                     android:icon="@drawable/ic_extra_curr"
                     android:title="EXTRA CURRICULUMS" />
 
+                <item
+                    android:id="@+id/done_tasks"
+                    android:icon="@drawable/ic_extra_curr"
+                    android:title="DONE TASKS" />
+
             </menu>
 
         </item>

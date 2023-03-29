@@ -11,6 +11,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
@@ -24,6 +25,7 @@ public class AlarmReceiver extends BroadcastReceiver {
     private static final String CHANNEL_DESCRIPTION = "Reminds the user to complete a task.";
 
     private String taskTitle;
+    String tableName;
     String taskDescription;
 
 
@@ -31,11 +33,12 @@ public class AlarmReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         // Get the task information from the intent
-         taskTitle = intent.getStringExtra("taskTitle");
-         taskDescription = intent.getStringExtra("taskDescription");
+        taskTitle = intent.getStringExtra("taskTitle");
+        taskDescription = intent.getStringExtra("taskDescription");
+        tableName= intent.getStringExtra("tableName");
 
-        Intent notificationIntent = new Intent(context, ToDoActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_MUTABLE);
+        //Intent notificationIntent = new Intent(context, ToDoActivity.class);
+        //PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_MUTABLE);
 
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -49,14 +52,28 @@ public class AlarmReceiver extends BroadcastReceiver {
         }
 
         // Create a notification and show it
-        Intent actionButtonIntent = new Intent(context, ToDoActivity.class);
-        actionButtonIntent.setAction("ACTION_NAME");
+        Intent visitButtonIntent = new Intent(context, ToDoActivity.class);
+        visitButtonIntent.setAction("ACTION_VISIT");
 
-// Create the PendingIntent for the action button
-        PendingIntent actionPendingIntent = PendingIntent.getActivity(context, 0, actionButtonIntent, PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_MUTABLE);
+        // Create the PendingIntent for the visit button
+        PendingIntent visitPendingIntent = PendingIntent.getActivity(context, 0, visitButtonIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
 
-// Create the action button and add it to the notification
-        NotificationCompat.Action action = new NotificationCompat.Action.Builder(R.drawable.ic_action_name, "visit", actionPendingIntent).build();
+        // Create the visit button and add it to the notification
+        NotificationCompat.Action visitAction = new NotificationCompat.Action.Builder(R.drawable.ic_action_name, "Visit", visitPendingIntent).build();
+
+        // Create the intent for the Done button
+        Intent doneButtonIntent = new Intent(context, MyBroadcastReceiver.class);
+        String tableName = intent.getStringExtra("tableName");
+        int id=intent.getIntExtra("id",-1);
+        doneButtonIntent.putExtra("tableName", tableName);
+        doneButtonIntent.putExtra("id", id);
+        doneButtonIntent.setAction("ACTION_DONE");
+        Log.d("lets ee", "onReceive: " + tableName +id);
+        // Create the PendingIntent for the Done button
+        PendingIntent donePendingIntent = PendingIntent.getBroadcast(context, 0, doneButtonIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+
+        // Create the Done button and add it to the notification
+        NotificationCompat.Action doneAction = new NotificationCompat.Action.Builder(R.drawable.ic_action_name, "Done", donePendingIntent).build();
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_add_tasks)
@@ -64,17 +81,11 @@ public class AlarmReceiver extends BroadcastReceiver {
                 .setContentText(taskDescription)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-                .addAction(action)
-               // .setChannelId(CHANNEL_ID)
+                .addAction(visitAction)
+                .addAction(doneAction)
                 .setAutoCancel(true);
 
-
-
-
         notificationManager.notify(1, builder.build());
-
     }
-
-
 }
 

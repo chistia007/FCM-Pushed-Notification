@@ -17,5 +17,6 @@
 
     <string name="open"> </string>
     <string name="close"> </string>
+    <string name="configure">Configure</string>
 </resources>
 

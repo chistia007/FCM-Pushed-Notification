@@ -6,21 +6,51 @@ public class Task {
     private String dueDate;
     private long _id;
     private boolean isChecked;
+    private int correspondingTableId;
+    private String correspondingTable;
+
+
 
     public boolean isChecked() {
         return isChecked;
+    }
+
+    public Task(long _id, String title, String description, String dueDate, boolean isChecked, int correspondingTableId,  String correspondingTable) {
+        this.title = title;
+        this.description = description;
+        this.dueDate = dueDate;
+        this._id=_id;
+        this.isChecked = isChecked;
+        this.correspondingTableId = correspondingTableId;
+        this.correspondingTable = correspondingTable;
+    }
+
+    public long get_id() {
+        return _id;
+    }
+
+    public void set_id(long _id) {
+        this._id = _id;
     }
 
     public void setChecked(boolean checked) {
         isChecked = checked;
     }
 
-    public Task(long _id, String title, String description, String dueDate, boolean isChecked) {
-        this.title = title;
-        this.description = description;
-        this.dueDate = dueDate;
-        this._id=_id;
-        this.isChecked = isChecked;
+    public int getCorrespondingTableId() {
+        return correspondingTableId;
+    }
+
+    public void setCorrespondingTableId(int correspondingTableId) {
+        this.correspondingTableId = correspondingTableId;
+    }
+
+    public String getCorrespondingTable() {
+        return correspondingTable;
+    }
+
+    public void setCorrespondingTable(String correspondingTable) {
+        this.correspondingTable = correspondingTable;
     }
 
     public long get_id(int position) {

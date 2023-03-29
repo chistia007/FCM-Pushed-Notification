@@ -10,6 +10,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
+import android.content.Context;
 import android.database.Cursor;
 import android.app.AlarmManager;
 import android.app.DatePickerDialog;
@@ -19,6 +22,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -30,14 +34,13 @@ import android.widget.Toast;
 
 import com.example.fcm.databinding.ActivityToDoBinding;
 import com.google.android.material.navigation.NavigationView;
-import com.google.android.material.textfield.TextInputLayout;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-public class ToDoActivity extends AppCompatActivity {
+public class ToDoActivity extends AppCompatActivity{
     ActivityToDoBinding binding;
     private List<Task> tasks = new ArrayList<>();
     private TaskAdapter taskAdapter;
@@ -60,8 +63,11 @@ public class ToDoActivity extends AppCompatActivity {
     OnItemClickListener listener;
     RecyclerView taskList;
     LinearLayoutManager layoutManager;
-    public String selectTable;
-    private String select;
+    public String selectTable="allTasks";
+    Boolean navigation_clicked= true;
+    Calendar calendar;
+    public static final String ACTION_DATA_UPDATED = "com.example.fcm.ACTION_DATA_UPDATED";
+
 
     @SuppressLint("NotifyDataSetChanged")
     @Override
@@ -70,35 +76,9 @@ public class ToDoActivity extends AppCompatActivity {
         binding=ActivityToDoBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-
-
         db=new Database(this);
 
-
-        taskList = findViewById(R.id.task_list);
-        taskAdapter = new TaskAdapter(tasks,listener);
-        taskList.setAdapter(taskAdapter);
-        layoutManager = new LinearLayoutManager(this);
-        layoutManager.setReverseLayout(true);
-        layoutManager.setStackFromEnd(true);
-        taskList.setLayoutManager(layoutManager);
-
-
-
-        t = db.getInfo(selectTable=navigationDrawer()); //t is Cursor
-        if (t.getCount() == 0) {
-            Toast.makeText(ToDoActivity.this, "No data founded", Toast.LENGTH_SHORT).show();
-        } else {
-            tasks.clear();
-            int index = 0; // keep track of the current index
-            while (t.moveToNext()) {
-                task = new Task(t.getLong(0), t.getString(1), t.getString(2), t.getString(3), checked);
-                tasks.add(index, task); // add the new item at the current index
-                taskAdapter.notifyItemInserted(index); // notify the adapter of the new item
-                index++; // increment the index for the next item
-            }
-        }
-
+        updateUI(selectTable);
 
 
 
@@ -111,9 +91,10 @@ public class ToDoActivity extends AppCompatActivity {
             }
         });
 
-       // FirebaseApp.initializeApp(this);
 
-        listener = new OnItemClickListener() {
+        navigationDrawer();
+
+        try{listener = new OnItemClickListener() {
             @Override
             public void onItemClick(View view, int position) {
                 Task task = tasks.get(position);
@@ -121,61 +102,79 @@ public class ToDoActivity extends AppCompatActivity {
                 String line1 = task.getTitle();
                 String line2 = task.getDescription();
                 String line3 = task.getDueDate();
-                UpdateTaskInDialog(line0,line1,line2,line3);
+                int line4=task.getCorrespondingTableId();
+                String line5=task.getCorrespondingTable();
+                UpdateTaskInDialog(line0,line1,line2,line3,line4,line5);
             }
+
+            //Delete operation
+
             @Override
+
             public void onCheckboxClick(View view, int position, boolean isChecked) {
                 Task task = tasks.get(position);
                 task.setComplete(isChecked);
-                Toast.makeText(ToDoActivity.this, "checked", Toast.LENGTH_SHORT).show();
+
                 if (isChecked) {
                     // delete task from database using auto-incremented ID
-                    Boolean s=db.deleteData(task.get_id(position));
+                    Boolean s=db.deleteData(task.get_id(position),task.getTitle(),task.getDescription(),task.getDueDate(),task.getCorrespondingTableId(),task.getCorrespondingTable(),navigation_clicked);
                     if(s){
-                        Toast.makeText(ToDoActivity.this, "done del", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ToDoActivity.this, "Task Done", Toast.LENGTH_SHORT).show();
                     }
                     // remove task from list and notify adapter
                     tasks.remove(position);
+                    tasks.clear();
                     taskAdapter.notifyItemRemoved(position);
                 }
             }
 
 
         };
+        } catch (Exception e) {
+            Log.e("listener error", "Error occurred while performing database operations: " + e.getMessage());
+        }
 
 
+        updateUI(selectTable);
 
+    }
+
+    private void updateUI(String selectTable) {
         taskList = findViewById(R.id.task_list);
         taskAdapter = new TaskAdapter(tasks,listener);
         taskList.setAdapter(taskAdapter);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        layoutManager = new LinearLayoutManager(this);
         layoutManager.setReverseLayout(true);
         layoutManager.setStackFromEnd(true);
         taskList.setLayoutManager(layoutManager);
-
-
-
-        t = db.getInfo(selectTable);
+        t = db.getInfo(selectTable); //t is Cursor
         if (t.getCount() == 0) {
             Toast.makeText(ToDoActivity.this, "No data founded", Toast.LENGTH_SHORT).show();
         } else {
             tasks.clear();
             int index = 0; // keep track of the current index
             while (t.moveToNext()) {
-                task = new Task(t.getLong(0), t.getString(1), t.getString(2), t.getString(3), checked);
+                task = new Task(t.getLong(0), t.getString(1), t.getString(2), t.getString(3), checked, t.getInt(4),t.getString(5));
+                Log.d("dfg", "updateUI: "+t.getInt(5));
+                Log.d("dfg1", "updateUI: "+t.getString(4));
                 tasks.add(index, task); // add the new item at the current index
                 taskAdapter.notifyItemInserted(index); // notify the adapter of the new item
                 index++; // increment the index for the next item
             }
         }
 
-
+        // Updating the widget whenever adding a new TODOs
+        Context context = getApplicationContext();
+        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
+        ComponentName componentName = new ComponentName(context, My_Widget.class);
+        int[] appWidgetIds = appWidgetManager.getAppWidgetIds(componentName);
+        My_Widget m =new My_Widget();
+        m.onUpdate(context,appWidgetManager,appWidgetIds);
 
     }
 
     @SuppressLint("NonConstantResourceId")
-    private String navigationDrawer() {
-        this.selectTable = "all";
+    private void navigationDrawer() {
 
         DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.nav_View);
@@ -193,19 +192,31 @@ public class ToDoActivity extends AppCompatActivity {
         navigationView.setNavigationItemSelectedListener(item -> {
             switch (item.getItemId()) {
                 case R.id.officeWorks:
-                    this.selectTable="office";
+                    navigation_clicked=false;
+                    updateUI("office");
                     break;
                 case R.id.houseWork:
-                    this.selectTable = "house";
+                    navigation_clicked=false;
+                    updateUI("house");
                     break;
                 case R.id.learning:
-                    this.selectTable = "learning";
+                    navigation_clicked=false;
+                    updateUI("learning");
                     break;
                 case R.id.extra_curr:
-                    this.selectTable = "extra";
+                    navigation_clicked=false;
+                    updateUI("extra");
+                    break;
+                case R.id.done_tasks:
+                    navigation_clicked=false;
+                    updateUI("doneTasks");
+                    break;
+                case R.id.settings:
+                    startActivity(new Intent(ToDoActivity.this,SettingsActivity.class));
                     break;
                 default:
-                    this.selectTable = "all";
+                    navigation_clicked=true;
+                    updateUI("allTasks");
                     break;
             }
 
@@ -218,8 +229,7 @@ public class ToDoActivity extends AppCompatActivity {
         // Set up AppBar click event to open the navigation drawer
         binding.imageMenu.setOnClickListener(view -> drawerLayout.openDrawer(GravityCompat.START));
 
-        // Return the updated selectTable value
-        return this.selectTable;
+
     }
 
 
@@ -239,25 +249,7 @@ public class ToDoActivity extends AppCompatActivity {
         dueDateEditText = view.findViewById(R.id.edit_text_due_date);
         dropDowns=view.findViewById(R.id.dropDownText);
 
-
-
-        String items[]=new String[]{
-                "allTasks",
-                "office",
-                "house",
-                "learning",
-                "extra"
-        };
-
-        ArrayAdapter<String> adapter= new ArrayAdapter<>(
-                ToDoActivity.this,
-                R.layout.drop_down_text,
-                items
-        );
-
-        dropDowns.setAdapter(adapter);
-
-
+        dropDownMenu();
 
         // Set the layout for the AlertDialog and set the positive and negative buttons
         builder.setView(view);
@@ -273,23 +265,20 @@ public class ToDoActivity extends AppCompatActivity {
                 taskTitle = titleEditText.getText().toString();
                 taskDescription = descriptionEditText.getText().toString();
                 String dueDate = dueDateEditText.getText().toString();
+                selectTable=dropDowns.getText().toString();
+                if(selectTable.equals("")){
+                    selectTable="allTasks";
+                }
 
-
-                k=db.insert_data(dropDowns.getText().toString(),taskTitle,taskDescription,dueDate);
+                k=db.insert_data(selectTable,taskTitle,taskDescription,dueDate);
                 if(k!=0){
                     Toast.makeText(ToDoActivity.this, "Successfully data Inserted", Toast.LENGTH_SHORT).show();
+                    updateUI(selectTable);
                 }
-                else{Toast.makeText(ToDoActivity.this, "Insertion failed", Toast.LENGTH_SHORT).show();}
+                else{Toast.makeText(ToDoActivity.this, "Insertion failed to", Toast.LENGTH_SHORT).show();}
 
-
-                t=db.getInfo(selectTable);
-                tasks.clear();
-                while(t.moveToNext()){
-                    task = new Task(t.getLong(0), t.getString(1), t.getString(2),t.getString(3),checked);
-                    tasks.add(task);
-                }
-                taskAdapter.notifyDataSetChanged();
-
+                //setting reminder and sending the selected table so that we can delete it from the notification bar when we receive broadcast
+                setReminder(selectTable);
 
             }
         });
@@ -305,7 +294,7 @@ public class ToDoActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // Get the current date and time
-                Calendar calendar = Calendar.getInstance();
+                calendar = Calendar.getInstance();
                 int year = calendar.get(Calendar.YEAR);
                 int month = calendar.get(Calendar.MONTH);
                 int day = calendar.get(Calendar.DAY_OF_MONTH);
@@ -333,13 +322,7 @@ public class ToDoActivity extends AppCompatActivity {
                                                 taskTitle = titleEditText.getText().toString();
                                                 taskDescription = descriptionEditText.getText().toString();
 
-                                                Intent intent = new Intent(ToDoActivity.this, AlarmReceiver.class);
-                                                intent.putExtra("taskTitle", taskTitle);
-                                                intent.putExtra("taskDescription", taskDescription);
-                                                PendingIntent pendingIntent = PendingIntent.getBroadcast(ToDoActivity.this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_MUTABLE);
 
-                                                // Set the alarm
-                                                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
 
                                             }
                                         }, hour, minute, false);
@@ -357,8 +340,22 @@ public class ToDoActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    private void setReminder(String selectTable) {
+        Intent intent = new Intent(ToDoActivity.this, AlarmReceiver.class);
+        intent.putExtra("taskTitle", taskTitle);
+        intent.putExtra("taskDescription", taskDescription);
+        intent.putExtra("tableName", selectTable);
+        int id = db.getMaxRowNumber(selectTable);
+        intent.putExtra("id",id);
 
-    private void UpdateTaskInDialog(long id, String line1, String line2, String line3) {
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(ToDoActivity.this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_MUTABLE);
+
+        // Set the alarm
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
+    }
+
+
+    private void UpdateTaskInDialog(long id, String line1, String line2, String line3,int line4,String line5) {
         // Create an AlertDialog builder and set the title and message
         AlertDialog.Builder builder = new AlertDialog.Builder(this,R.style.MyAlertDialogTheme);
         builder.setTitle(R.string.add_task_dialog_title);
@@ -369,6 +366,11 @@ public class ToDoActivity extends AppCompatActivity {
         titleEditText = view.findViewById(R.id.edit_text_title);
         descriptionEditText = view.findViewById(R.id.edit_text_description);
         dueDateEditText = view.findViewById(R.id.edit_text_due_date);
+        dropDowns=view.findViewById(R.id.dropDownText);
+
+
+
+        dropDownMenu();
         // setting texts to edittext when user click an item on recyclerview
         titleEditText.setText(line1);
         descriptionEditText.setText(line2);
@@ -389,33 +391,27 @@ public class ToDoActivity extends AppCompatActivity {
                 taskTitle = titleEditText.getText().toString();
                 taskDescription = descriptionEditText.getText().toString();
                 String dueDate = dueDateEditText.getText().toString();
+                selectTable=dropDowns.getText().toString();
 
-                if(taskTitle.equals("")|| taskDescription.equals("") || dueDate.equals("")){
+                if(taskTitle.equals("")|| taskDescription.equals("")){
                     Toast.makeText(ToDoActivity.this, "You can not leave any field empty", Toast.LENGTH_SHORT).show();
                 }
                 else{
-                    i=db.updateDatabase(id,taskTitle,taskDescription,dueDate);
-                    if(i){
-                        Toast.makeText(ToDoActivity.this, "Successfully data Inserted", Toast.LENGTH_SHORT).show();
+                    if (selectTable.equals("")){
+                        selectTable="allTasks";
                     }
-                    else{Toast.makeText(ToDoActivity.this, "Insertion failed", Toast.LENGTH_SHORT).show();}
-                }
-
-                t=db.getInfo(selectTable);
-                tasks.clear();
-                if(t.getCount()==0){
-                    Toast.makeText(ToDoActivity.this, "No data founded", Toast.LENGTH_SHORT).show();
-                }
-                while(t.moveToNext()){
-                    task = new Task(t.getLong(0), t.getString(1), t.getString(2), t.getString(3),checked);
-                    tasks.add(task);
+                    dropDownMenu();
+                    i=db.updateDatabase(selectTable,id,taskTitle,taskDescription,dueDate,line4,line5,navigation_clicked);
+                    if(i){
+                        Toast.makeText(ToDoActivity.this, "Updated", Toast.LENGTH_SHORT).show();
+                        updateUI(selectTable);
+                    }
+                    else{Toast.makeText(ToDoActivity.this,"It doesn't  belong to "+ selectTable, Toast.LENGTH_SHORT).show();}
                 }
 
 
 
 
-                // Notify the adapter that the data has changed
-                taskAdapter.notifyDataSetChanged();
 
 
             }
@@ -482,13 +478,33 @@ public class ToDoActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    private void dropDownMenu() {
+        String items[]=new String[]{
+                "allTasks",
+                "officeWork",
+                "houseWork",
+                "learning",
+                "extraCurr"
+        };
+
+        ArrayAdapter<String> adapter= new ArrayAdapter<>(
+                ToDoActivity.this,
+                R.layout.drop_down_text,
+                items
+        );
+
+        dropDowns.setAdapter(adapter);
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
         if (t != null) {
-            t.close();   //t is Cursor
+            //t.close();
+            //t is Cursor
         }
     }
+
 }
 
 
