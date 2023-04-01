@@ -1,24 +1,14 @@
 package com.example.fcm;
 
 import android.annotation.SuppressLint;
-import android.content.ClipData;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
-
-import com.google.android.material.animation.AnimatableView;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 
 public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder> {
@@ -79,9 +69,9 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
     static class TaskViewHolder extends RecyclerView.ViewHolder {
 
         TextView taskNameTextView;
+        TextView taskDesc;
         TextView dueTimeTextView;
 
-        TextView taskDesc;
 
         CheckBox checkBox;
 
@@ -89,8 +79,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
         TaskViewHolder(@NonNull View itemView) {
             super(itemView);
             taskNameTextView = itemView.findViewById(R.id.task_name);
-            dueTimeTextView = itemView.findViewById(R.id.due_time);
             taskDesc= itemView.findViewById(R.id.task_desc);
+            dueTimeTextView = itemView.findViewById(R.id.due_time);
             checkBox = itemView.findViewById(R.id.task_checkbox);
 
 

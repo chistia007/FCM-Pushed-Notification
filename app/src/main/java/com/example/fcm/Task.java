@@ -15,6 +15,7 @@ public class Task {
         return isChecked;
     }
 
+
     public Task(long _id, String title, String description, String dueDate, boolean isChecked, int correspondingTableId,  String correspondingTable) {
         this.title = title;
         this.description = description;
@@ -22,6 +23,14 @@ public class Task {
         this._id=_id;
         this.isChecked = isChecked;
         this.correspondingTableId = correspondingTableId;
+        this.correspondingTable = correspondingTable;
+    }
+    public Task(long _id, String title, String description, String dueDate, boolean isChecked,  String correspondingTable) {
+        this.title = title;
+        this.description = description;
+        this.dueDate = dueDate;
+        this._id=_id;
+        this.isChecked = isChecked;
         this.correspondingTable = correspondingTable;
     }
 

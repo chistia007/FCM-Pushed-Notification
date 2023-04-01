@@ -70,4 +70,5 @@ public class SettingsActivity extends AppCompatActivity {
         editor.putFloat(ALPHA_KEY, alpha);
         editor.apply();
     }
+
 }

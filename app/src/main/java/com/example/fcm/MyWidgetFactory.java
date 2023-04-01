@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.util.Log;
+import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
@@ -62,20 +63,10 @@ public class MyWidgetFactory implements RemoteViewsService.RemoteViewsFactory {
 
 
         // Update the views with data
+        views.setViewVisibility(R.id.task_checkbox, View.GONE);
         views.setTextViewText(R.id.task_name, title);
         views.setTextViewText(R.id.task_desc, description);
         views.setTextViewText(R.id.due_time, dueDate);
-
-
-
-
-//        // Create an Intent to launch the TaskDetailActivity when the item is clicked
-//        Intent intent = new Intent(context, ToDoActivity.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//        //intent.putExtra("ToDoActivity.EXTRA_TASK_ID", cursor.getInt(cursor.getColumnIndex("_id")));
-//        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
-//        views.setOnClickPendingIntent(R.id.item, pendingIntent);
-
-
         return views;
     }
 

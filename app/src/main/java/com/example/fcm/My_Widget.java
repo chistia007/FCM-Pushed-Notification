@@ -38,6 +38,7 @@ public class My_Widget extends AppWidgetProvider {
             }
             views.setTextViewText(R.id.totalTodos,"Total " +index +" Todos");
 
+
             // Update the widget
             appWidgetManager.updateAppWidget(appWidgetId, views);
             appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetId,R.id.list_view);

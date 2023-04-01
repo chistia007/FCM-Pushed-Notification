@@ -173,22 +173,6 @@ public class Database extends SQLiteOpenHelper {
         }
         else{return false;}
 
-//        if (selectTable.equals("allTasks")){
-//            Cursor cursor1 = db.rawQuery("SELECT correspondingTable FROM allTasks WHERE _id=?", new String[]{String.valueOf(_id)});
-//            Cursor cursor2 = db.rawQuery("SELECT correspondingTableId FROM allTasks WHERE _id=?", new String[]{String.valueOf(_id)});
-//            cursor1.moveToFirst();
-//            cursor2.moveToFirst();
-//            String alternativeTablename= cursor1.getString(0);
-//            int alternativeTablenameId= cursor2.getInt(0);
-//
-//            String selection1 = "_id=?";
-//            String[] selectionArgs1 = new String[]{String.valueOf(alternativeTablenameId)};
-//            int numRowsAffected1 = db.update(alternativeTablename, c, selection1, selectionArgs1);
-//
-//            int numRowsAffected2 = db.update("allTasks", c, selection, selectionArgs);
-//            return numRowsAffected2 > 0;
-//        }
-
     }
     //Delete a data
     public boolean deleteData(long id, String title, String description, String dueDate,int corrTabID,String corrTabName, boolean navigation_clicked){
@@ -254,6 +238,16 @@ public class Database extends SQLiteOpenHelper {
 //        db.close();
 
         return maxRow;
+    }
+
+    public void doneTaskDelete(long id){
+        db = this.getWritableDatabase();
+        try {
+            db.delete("doneTasks", "_id=?", new String[]{String.valueOf(id)});
+            // Perform database operations...
+        } catch (Exception e) {
+            Log.e("TAG", "Error occurred while performing database operations: " + e.getMessage());
+        }
     }
 
 

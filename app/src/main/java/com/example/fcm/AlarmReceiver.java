@@ -27,6 +27,9 @@ public class AlarmReceiver extends BroadcastReceiver {
     private String taskTitle;
     String tableName;
     String taskDescription;
+    String dueDate;
+    int id1;
+    int id2;
 
 
     @SuppressLint("MissingPermission")
@@ -36,6 +39,9 @@ public class AlarmReceiver extends BroadcastReceiver {
         taskTitle = intent.getStringExtra("taskTitle");
         taskDescription = intent.getStringExtra("taskDescription");
         tableName= intent.getStringExtra("tableName");
+        dueDate= intent.getStringExtra("dueDate");
+        id1=intent.getIntExtra("id1",-1);
+        id2=intent.getIntExtra("id2",-1);
 
         //Intent notificationIntent = new Intent(context, ToDoActivity.class);
         //PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_MUTABLE);
@@ -63,12 +69,13 @@ public class AlarmReceiver extends BroadcastReceiver {
 
         // Create the intent for the Done button
         Intent doneButtonIntent = new Intent(context, MyBroadcastReceiver.class);
-        String tableName = intent.getStringExtra("tableName");
-        int id=intent.getIntExtra("id",-1);
         doneButtonIntent.putExtra("tableName", tableName);
-        doneButtonIntent.putExtra("id", id);
+        doneButtonIntent.putExtra("id1", id1);
+        doneButtonIntent.putExtra("id2", id2);
+        doneButtonIntent.putExtra("taskTitle", taskTitle);
+        doneButtonIntent.putExtra("taskDescription", taskDescription);
+        doneButtonIntent.putExtra("dueDate", dueDate);
         doneButtonIntent.setAction("ACTION_DONE");
-        Log.d("lets ee", "onReceive: " + tableName +id);
         // Create the PendingIntent for the Done button
         PendingIntent donePendingIntent = PendingIntent.getBroadcast(context, 0, doneButtonIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
 

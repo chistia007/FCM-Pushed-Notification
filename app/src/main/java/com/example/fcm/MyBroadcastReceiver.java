@@ -8,7 +8,6 @@ import android.util.Log;
 import android.widget.Toast;
 
 public class MyBroadcastReceiver extends BroadcastReceiver {
-
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.d("Firestone", "onReceive: received");
@@ -20,16 +19,21 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
             Log.d("tjird", "onReceive: received");
 
             String tableName = intent.getStringExtra("tableName");
-            int id = intent.getIntExtra("id",-1);
+            String title = intent.getStringExtra("taskTitle");
+            String tableDesc = intent.getStringExtra("tableDescription");
+            String dueDate = intent.getStringExtra("dueDate");
+            int id1 = intent.getIntExtra("id1",-1);
+            int id2 = intent.getIntExtra("id2",-1);
 
-                Log.d("fourth", "onReceive: received");
+                Log.d("fourth", "onReceive: received"+tableName);
                 Database mDatabase = new Database(context);
-                SQLiteDatabase db = mDatabase.getWritableDatabase();
-                int rowsDeleted = db.delete("allTasks", "_id=?", new String[]{String.valueOf(id)});
-                if (rowsDeleted > 0) {
-                    Toast.makeText(context, "Task deleted", Toast.LENGTH_SHORT).show();
-                }
-                mDatabase.close();
+                mDatabase.deleteData(id1,title,tableDesc,dueDate,id2,tableName,true);
+//                SQLiteDatabase db = mDatabase.getWritableDatabase();
+//                int rowsDeleted = db.delete("allTasks", "_id=?", new String[]{String.valueOf(id1)});
+//                if (rowsDeleted > 0) {
+//                    Toast.makeText(context, "Task deleted", Toast.LENGTH_SHORT).show();
+//                }
+//                mDatabase.close();
         }
     }
 }
