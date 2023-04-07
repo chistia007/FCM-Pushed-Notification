@@ -4,15 +4,21 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.app.AlarmManager;
 import android.app.DatePickerDialog;
@@ -20,6 +26,7 @@ import android.app.PendingIntent;
 import android.app.TimePickerDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -41,14 +48,18 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
-public class ToDoActivity extends AppCompatActivity{
+public class ToDoActivity extends AppCompatActivity {
     ActivityToDoBinding binding;
     private List<Task> tasks = new ArrayList<>();
     private TaskAdapter taskAdapter;
     private String taskTitle;
-    private  String taskDescription;
+    private String taskDescription;
     private String dueDateBroadcast;
 
     EditText titleEditText;
@@ -63,28 +74,34 @@ public class ToDoActivity extends AppCompatActivity{
     Cursor t;
     boolean i;
     long k;
-    Boolean checked=false;
+    Boolean checked = false;
     OnItemClickListener listener;
     RecyclerView taskList;
     LinearLayoutManager layoutManager;
-    public String selectTable="allTasks";
-    Boolean navigation_clicked= true;
+    public String selectTable = "allTasks";
+    Boolean navigation_clicked = true;
     Calendar calendar;
     public static final String ACTION_DATA_UPDATED = "com.example.fcm.ACTION_DATA_UPDATED";
-    Boolean doneChecked=false;
+    Boolean doneChecked = false;
+    String currentDate1;
+    String nextDate;
+    Date currentDate;
+    int index;
 
 
     @SuppressLint("NotifyDataSetChanged")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding=ActivityToDoBinding.inflate(getLayoutInflater());
+        binding = ActivityToDoBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        db=new Database(this);
+        scheduleExpirationCheck();
+
+
+        db = new Database(this);
 
         updateUI(selectTable);
-
 
 
         binding.addTaskButton.setOnClickListener(new View.OnClickListener() {
@@ -99,54 +116,55 @@ public class ToDoActivity extends AppCompatActivity{
 
         navigationDrawer();
 
-        try{listener = new OnItemClickListener() {
-            @Override
-            public void onItemClick(View view, int position) {
-                Task task = tasks.get(position);
-                long line0=task.get_id(position);
-                String line1 = task.getTitle();
-                String line2 = task.getDescription();
-                String line3 = task.getDueDate();
-                int line4=task.getCorrespondingTableId();
-                String line5=task.getCorrespondingTable();
-                UpdateTaskInDialog(line0,line1,line2,line3,line4,line5);
-            }
+        try {
+            listener = new OnItemClickListener() {
+                @Override
+                public void onItemClick(View view, int position) {
+                    Task task = tasks.get(position);
+                    long line0 = task.get_id(position);
+                    String line1 = task.getTitle();
+                    String line2 = task.getDescription();
+                    String line3 = task.getDueDate();
+                    int line4 = task.getCorrespondingTableId();
+                    String line5 = task.getCorrespondingTable();
+                    UpdateTaskInDialog(line0, line1, line2, line3, line4, line5);
+                }
 
-            //Delete operation
+                //Delete operation
 
-            @Override
+                @Override
 
-            public void onCheckboxClick(View view, int position, boolean isChecked) {
-                Task task = tasks.get(position);
-                task.setComplete(isChecked);
+                public void onCheckboxClick(View view, int position, boolean isChecked) {
+                    Task task = tasks.get(position);
+                    task.setComplete(isChecked);
 
 
-                if (doneChecked.equals(true)){
-                    Log.d("11", "onCheckboxClick: 11");
-                try {
-                        if (!isChecked){
-                            Log.d("11", "onCheckboxClick: 22");
-                            k=db.insert_data(task.getCorrespondingTable(),task.getTitle(),task.getDescription(),task.getDueDate());
-                            if(k!=0){
-                                Log.d("11", "onCheckboxClick: 33");
-                                Toast.makeText(ToDoActivity.this, "Successfully data Inserted", Toast.LENGTH_SHORT).show();
-                                db.doneTaskDelete(task.get_id());
-                                updateUI("doneTasks");
+                    if (doneChecked.equals(true)) {
+                        Log.d("11", "onCheckboxClick: 11");
+                        try {
+                            if (!isChecked) {    //recovering a done to-do to its corresponding table
+                                Log.d("11", "onCheckboxClick: 22");
+                                k = db.insert_data(task.getCorrespondingTable(), task.getTitle(), task.getDescription(), task.getDueDate());
+                                if (k != 0) {
+                                    Log.d("11", "onCheckboxClick: 33");
+                                    Toast.makeText(ToDoActivity.this, "Successfully data Inserted", Toast.LENGTH_SHORT).show();
+                                    db.doneTaskDelete(task.get_id());
+                                    updateUI("doneTasks");
+                                } else {
+                                    Log.d("11", "onCheckboxClick: 44");
+                                    Toast.makeText(ToDoActivity.this, "Insertion failed to", Toast.LENGTH_SHORT).show();
+                                }
                             }
-                            else{Log.d("11", "onCheckboxClick: 44");
-                                Toast.makeText(ToDoActivity.this, "Insertion failed to", Toast.LENGTH_SHORT).show();}
+                        } finally {
+
                         }
-                    } finally {
 
-                }
-
-                }
-                else{
-                    try{
+                    }
+                    try {
                         if (isChecked) {
                             // delete task from database using auto-incremented ID
-                            Boolean s=db.deleteData(task.get_id(position),task.getTitle(),task.getDescription(),task.getDueDate(),task.getCorrespondingTableId(),task.getCorrespondingTable(),navigation_clicked);
-                            if(s){
+                            Boolean s = db.deleteData(task.get_id(position), task.getTitle(), task.getDescription(), task.getDueDate(), task.getCorrespondingTableId(), task.getCorrespondingTable(), navigation_clicked);
+                            if (s) {
                                 Toast.makeText(ToDoActivity.this, "Task Done", Toast.LENGTH_SHORT).show();
                             }
                             // remove task from list and notify adapter
@@ -162,10 +180,9 @@ public class ToDoActivity extends AppCompatActivity{
 
 
                 }
-            }
 
 
-        };
+            };
         } catch (Exception e) {
             Log.e("listener error", "Error occurred while performing database operations: " + e.getMessage());
         }
@@ -177,7 +194,7 @@ public class ToDoActivity extends AppCompatActivity{
 
     private void updateUI(String selectTable) {
         taskList = findViewById(R.id.task_list);
-        taskAdapter = new TaskAdapter(tasks,listener);
+        taskAdapter = new TaskAdapter(tasks, listener);
         taskList.setAdapter(taskAdapter);
         layoutManager = new LinearLayoutManager(this);
         layoutManager.setReverseLayout(true);
@@ -187,15 +204,16 @@ public class ToDoActivity extends AppCompatActivity{
         if (t.getCount() == 0) {
             Toast.makeText(ToDoActivity.this, "No data founded", Toast.LENGTH_SHORT).show();
             tasks.clear();
-            doneChecked=false;
+            doneChecked = false;
         } else {
             tasks.clear();
             int index = 0; // keep track of the current index
             while (t.moveToNext()) {
-                if (selectTable.equals("doneTasks")){
+                if (selectTable.equals("doneTasks")) {
                     task = new Task(t.getLong(0), t.getString(1), t.getString(2), t.getString(3), true, t.getString(4));
+                } else {
+                    task = new Task(t.getLong(0), t.getString(1), t.getString(2), t.getString(3), checked, t.getInt(4), t.getString(5));
                 }
-                else{ task = new Task(t.getLong(0), t.getString(1), t.getString(2), t.getString(3), checked, t.getInt(4),t.getString(5));}
                 tasks.add(index, task); // add the new item at the current index
                 taskAdapter.notifyItemInserted(index); // notify the adapter of the new item
                 index++; // increment the index for the next item
@@ -208,8 +226,8 @@ public class ToDoActivity extends AppCompatActivity{
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
         ComponentName componentName = new ComponentName(context, My_Widget.class);
         int[] appWidgetIds = appWidgetManager.getAppWidgetIds(componentName);
-        My_Widget m =new My_Widget();
-        m.onUpdate(context,appWidgetManager,appWidgetIds);
+        My_Widget m = new My_Widget();
+        m.onUpdate(context, appWidgetManager, appWidgetIds);
 
     }
 
@@ -229,40 +247,39 @@ public class ToDoActivity extends AppCompatActivity{
 
         // Set up NavigationView
         navigationView.setNavigationItemSelectedListener(item -> {
-            doneChecked=false;
+            doneChecked = false;
             switch (item.getItemId()) {
                 case R.id.officeWorks:
-                    navigation_clicked=false;
-
+                    navigation_clicked = false;
                     binding.bucketName.setText("OFFICE");
                     updateUI("office");
                     break;
                 case R.id.houseWork:
-                    navigation_clicked=false;
+                    navigation_clicked = false;
                     binding.bucketName.setText("HOUSE");
                     updateUI("house");
                     break;
                 case R.id.learning:
-                    navigation_clicked=false;
+                    navigation_clicked = false;
                     binding.bucketName.setText("LEARNING");
                     updateUI("learning");
                     break;
                 case R.id.extra_curr:
-                    navigation_clicked=false;
+                    navigation_clicked = false;
                     binding.bucketName.setText("EXTRA CURRICULUM");
                     updateUI("extra");
                     break;
                 case R.id.done_tasks:
-                    navigation_clicked=false;
-                    doneChecked=true;
+                    navigation_clicked = false;
+                    doneChecked = true;
                     binding.bucketName.setText("DONE TASKS");
                     updateUI("doneTasks");
                     break;
                 case R.id.settings:
-                    startActivity(new Intent(ToDoActivity.this,SettingsActivity.class));
+                    startActivity(new Intent(ToDoActivity.this, SettingsActivity.class));
                     break;
                 default:
-                    navigation_clicked=true;
+                    navigation_clicked = true;
                     binding.bucketName.setText("ALL TASKS");
                     updateUI("allTasks");
                     break;
@@ -283,7 +300,7 @@ public class ToDoActivity extends AppCompatActivity{
 
     private void showAddTaskDialog() {
         // Create an AlertDialog builder and set the title and message
-        AlertDialog.Builder builder = new AlertDialog.Builder(this,R.style.MyAlertDialogTheme);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.MyAlertDialogTheme);
         builder.setTitle(R.string.add_task_dialog_title);
         builder.setMessage(R.string.add_task_dialog_message);
 
@@ -295,7 +312,7 @@ public class ToDoActivity extends AppCompatActivity{
         titleEditText = view.findViewById(R.id.edit_text_title);
         descriptionEditText = view.findViewById(R.id.edit_text_description);
         dueDateEditText = view.findViewById(R.id.edit_text_due_date);
-        dropDowns=view.findViewById(R.id.dropDownText);
+        dropDowns = view.findViewById(R.id.dropDownText);
 
         dropDownMenu();
 
@@ -313,21 +330,22 @@ public class ToDoActivity extends AppCompatActivity{
                 taskTitle = titleEditText.getText().toString();
                 taskDescription = descriptionEditText.getText().toString();
                 String dueDate = dueDateEditText.getText().toString();
-                selectTable=dropDowns.getText().toString();
-                if(selectTable.equals("")){
-                    selectTable="allTasks";
+                selectTable = dropDowns.getText().toString();
+                if (selectTable.equals("")) {
+                    selectTable = "allTasks";
                 }
 
-                k=db.insert_data(selectTable,taskTitle,taskDescription,dueDate);
-                if(k!=0){
+                k = db.insert_data(selectTable, taskTitle, taskDescription, dueDate);
+                if (k != 0) {
                     Toast.makeText(ToDoActivity.this, "Successfully data Inserted", Toast.LENGTH_SHORT).show();
                     updateUI(selectTable);
                     binding.bucketName.setText("ALL TASKS");
+                } else {
+                    Toast.makeText(ToDoActivity.this, "Insertion failed to", Toast.LENGTH_SHORT).show();
                 }
-                else{Toast.makeText(ToDoActivity.this, "Insertion failed to", Toast.LENGTH_SHORT).show();}
 
                 //setting reminder and sending the selected table so that we can delete it from the notification bar when we receive broadcast
-                if (!dueDate.equals("")){
+                if (!dueDate.equals("")) {
                     setReminder(selectTable);
                 }
 
@@ -373,8 +391,7 @@ public class ToDoActivity extends AppCompatActivity{
                                                 // Create a new Intent to trigger the alarm
                                                 taskTitle = titleEditText.getText().toString();
                                                 taskDescription = descriptionEditText.getText().toString();
-                                                dueDateBroadcast=dateFormat.format(calendar.getTime());
-
+                                                dueDateBroadcast = dateFormat.format(calendar.getTime());
 
 
                                             }
@@ -402,23 +419,22 @@ public class ToDoActivity extends AppCompatActivity{
         int id2 = db.getMaxRowNumber(selectTable);
         int id1 = db.getMaxRowNumber("allTasks");
 
-        intent.putExtra("id1",id1);
-        intent.putExtra("id2",id2);
+        intent.putExtra("id1", id1);
+        intent.putExtra("id2", id2);
 
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(ToDoActivity.this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_MUTABLE);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(ToDoActivity.this, id1, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
 
         // Set the alarm
 
         alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
 
 
-
     }
 
 
-    private void UpdateTaskInDialog(long id, String line1, String line2, String line3,int line4,String line5) {
+    private void UpdateTaskInDialog(long id, String line1, String line2, String line3, int line4, String line5) {
         // Create an AlertDialog builder and set the title and message
-        AlertDialog.Builder builder = new AlertDialog.Builder(this,R.style.MyAlertDialogTheme);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.MyAlertDialogTheme);
         builder.setTitle(R.string.add_task_dialog_title);
         builder.setMessage(R.string.add_task_dialog_message);
 
@@ -427,7 +443,7 @@ public class ToDoActivity extends AppCompatActivity{
         titleEditText = view.findViewById(R.id.edit_text_title);
         descriptionEditText = view.findViewById(R.id.edit_text_description);
         dueDateEditText = view.findViewById(R.id.edit_text_due_date);
-        dropDowns=view.findViewById(R.id.dropDownText);
+        dropDowns = view.findViewById(R.id.dropDownText);
 
 //        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 //        LocalDateTime dateTime = LocalDateTime.parse("2023-04-01 19:02", formatter);
@@ -458,27 +474,27 @@ public class ToDoActivity extends AppCompatActivity{
                 taskTitle = titleEditText.getText().toString();
                 taskDescription = descriptionEditText.getText().toString();
                 String dueDate = dueDateEditText.getText().toString();
-                selectTable=dropDowns.getText().toString();
+                selectTable = dropDowns.getText().toString();
 
-                if(taskTitle.equals("")){
+                if (taskTitle.equals("")) {
                     Toast.makeText(ToDoActivity.this, "You can not title empty", Toast.LENGTH_SHORT).show();
-                }
-                else{
-                    if (selectTable.equals("")){
-                        selectTable="allTasks";
+                } else {
+                    if (selectTable.equals("")) {
+                        selectTable = "allTasks";
                     }
                     dropDownMenu();
-                    i=db.updateDatabase(selectTable,id,taskTitle,taskDescription,dueDate,line4,line5,navigation_clicked);
-                    if(i){
+                    i = db.updateDatabase(selectTable, id, taskTitle, taskDescription, dueDate, line4, line5, navigation_clicked);
+                    if (i) {
                         Toast.makeText(ToDoActivity.this, "Updated", Toast.LENGTH_SHORT).show();
                         updateUI(selectTable);
                         binding.bucketName.setText("ALL TASKS");
 
+                    } else {
+                        Toast.makeText(ToDoActivity.this, "It doesn't  belong to " + selectTable, Toast.LENGTH_SHORT).show();
                     }
-                    else{Toast.makeText(ToDoActivity.this,"It doesn't  belong to "+ selectTable, Toast.LENGTH_SHORT).show();}
                 }
 
-                if (!dueDate.equals("")){
+                if (!dueDate.equals("")) {
                     setReminder(selectTable);
                 }
 
@@ -524,7 +540,7 @@ public class ToDoActivity extends AppCompatActivity{
                                                 // Create a new Intent to trigger the alarm
                                                 taskTitle = titleEditText.getText().toString();
                                                 taskDescription = descriptionEditText.getText().toString();
-                                                dueDateBroadcast=dateFormat.format(calendar.getTime());
+                                                dueDateBroadcast = dateFormat.format(calendar.getTime());
                                             }
                                         }, hour, minute, false);
                                 timePickerDialog.show();
@@ -540,7 +556,7 @@ public class ToDoActivity extends AppCompatActivity{
     }
 
     private void dropDownMenu() {
-        String items[]=new String[]{
+        String items[] = new String[]{
                 "allTasks",
                 "officeWork",
                 "houseWork",
@@ -548,7 +564,7 @@ public class ToDoActivity extends AppCompatActivity{
                 "extraCurr"
         };
 
-        ArrayAdapter<String> adapter= new ArrayAdapter<>(
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 ToDoActivity.this,
                 R.layout.drop_down_text,
                 items
@@ -566,8 +582,126 @@ public class ToDoActivity extends AppCompatActivity{
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
         ComponentName componentName = new ComponentName(context, My_Widget.class);
         int[] appWidgetIds = appWidgetManager.getAppWidgetIds(componentName);
-        My_Widget m =new My_Widget();
-        m.onUpdate(context,appWidgetManager,appWidgetIds);
+        My_Widget m = new My_Widget();
+        m.onUpdate(context, appWidgetManager, appWidgetIds);
+
+
+        ///fixed notification
+//        ArrayList<String> dates = new ArrayList<>();
+//        t = db.getInfo("allTasks");
+//        while (t.moveToNext()) {
+//            if (!t.getString(3).equals("")) {
+//                dates.add(t.getString(3));
+//            }
+//        }
+//        Collections.sort(dates);
+//        currentDate = new Date();
+//        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+//        currentDate1 = dateFormat.format(currentDate);
+//
+//        // Find the index of the next upcoming date
+//        index = -1;
+//        for (int i = 0; i < dates.size(); i++) {
+//            if (dates.get(i).compareTo(currentDate1) > 0) {
+//                index = i;
+//                break;
+//            }
+//        }
+//
+//        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//            // Create the notification channel for Android Oreo and higher
+//            NotificationChannel channel = new NotificationChannel("channel_id", "CHANNEL_NAME", NotificationManager.IMPORTANCE_HIGH);
+//            channel.setDescription("CHANNEL_DESCRIPTION");
+//            channel.enableLights(true);
+//            channel.setLightColor(Color.GREEN);
+//            channel.setSound(null,null);
+//            notificationManager.createNotificationChannel(channel);
+//        }
+//
+//
+//        // Create a notification with the details of the next upcoming date
+//        if (index != -1) {
+//            nextDate = dates.get(index);
+//            String message = "Next Schedule : " + nextDate.toString();
+//            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "channel_id")
+//                    .setContentTitle("Upcoming Date")
+//                    .setContentText(message)
+//                    .setSmallIcon(R.drawable.ic_add_tasks)
+//                    .setPriority(NotificationCompat.PRIORITY_LOW)
+//                    .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+//                    .setSound(null)
+//                    .setVisibility(NotificationCompat.VISIBILITY_SECRET)
+//                    .setOngoing(true);
+//
+//
+//
+//            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+//                // TODO: Consider calling
+//                //    ActivityCompat#requestPermissions
+//                // here to request the missing permissions, and then overriding
+//                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+//                //                                          int[] grantResults)
+//                // to handle the case where the user grants the permission. See the documentation
+//                // for ActivityCompat#requestPermissions for more details.
+//                return;
+//            }
+//            notificationManager.notify(1000, builder.build());
+//
+//            // Schedule a timer to check for expiration of current date and update the notification
+//            Timer timer = new Timer();
+//            timer.scheduleAtFixedRate(new TimerTask() {
+//                @Override
+//                public void run() {
+//                    if (currentDate1.compareTo(nextDate) > 0) {
+//                        // Current date has expired, find the next upcoming date and update the notification
+//                        int newIndex = -1;
+//                        for (int i = index + 1; i < dates.size(); i++) {
+//                            if (dates.get(i).compareTo(currentDate1) > 0) {
+//                                newIndex = i;
+//                                break;
+//                            }
+//                        }
+//                        if (newIndex != -1) {
+//                            String newNextDate = dates.get(newIndex);
+//                            String newMessage = "Next date: " + newNextDate.toString();
+//                            builder.setContentText(newMessage);
+//                            if (ActivityCompat.checkSelfPermission(ToDoActivity.this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+//                                // TODO: Consider calling
+//                                //    ActivityCompat#requestPermissions
+//                                // here to request the missing permissions, and then overriding
+//                                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+//                                //                                          int[] grantResults)
+//                                // to handle the case where the user grants the permission. See the documentation
+//                                // for ActivityCompat#requestPermissions for more details.
+//                                return;
+//                            }
+//                            notificationManager.notify(1000, builder.build());
+//                            nextDate = newNextDate;
+//                            index = newIndex;
+//                        } else {
+//                            // No more upcoming dates, cancel the notification
+//                            notificationManager.cancel(1000);
+//                            timer.cancel();
+//                        }
+//                    }
+//                }
+//            }, 0, 1000 * 60); // Check every minute for expiration of current date
+//        }
+
+
+
+    }
+    private void scheduleExpirationCheck() {
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+
+        // Create a pending intent to start the expiration check service
+        Intent intent = new Intent(this, ExpirationCheckService.class);
+        PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_MUTABLE);
+
+        // Schedule the expiration check to run every minute
+        long intervalMillis = 1000 * 60;
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), intervalMillis, pendingIntent);
     }
 }
 
