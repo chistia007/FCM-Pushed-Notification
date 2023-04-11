@@ -7,14 +7,10 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
-import android.os.Bundle;
 import android.util.Log;
-import android.widget.Toast;
-
-import androidx.core.app.ActivityCompat;
+import java.util.Random;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
@@ -35,6 +31,7 @@ public class AlarmReceiver extends BroadcastReceiver {
     @SuppressLint("MissingPermission")
     @Override
     public void onReceive(Context context, Intent intent) {
+        Log.d("Meowwwwwwwwww", "onReceive: 1234234213213421");
         // Get the task information from the intent
         taskTitle = intent.getStringExtra("taskTitle");
         taskDescription = intent.getStringExtra("taskDescription");
@@ -91,8 +88,13 @@ public class AlarmReceiver extends BroadcastReceiver {
                 .addAction(visitAction)
                 .addAction(doneAction)
                 .setAutoCancel(true);
+        Random rand = new Random();
 
-        notificationManager.notify(1, builder.build());
+        int minRange = 1, maxRange= 999;
+        int value = rand.nextInt(maxRange - minRange) + minRange;
+        if(value==1000){value=1;}
+
+        notificationManager.notify(value, builder.build());
     }
 }
 

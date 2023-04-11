@@ -89,14 +89,13 @@ public class ToDoActivity extends AppCompatActivity {
     int index;
 
 
-    @SuppressLint("NotifyDataSetChanged")
+    @SuppressLint({"NotifyDataSetChanged", "ShortAlarm"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityToDoBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        scheduleExpirationCheck();
 
 
         db = new Database(this);
@@ -189,6 +188,13 @@ public class ToDoActivity extends AppCompatActivity {
 
 
         updateUI(selectTable);
+
+        Intent intent = new Intent(ToDoActivity.this, MyReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(ToDoActivity.this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+
+        AlarmManager alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 10 * 1000, pendingIntent);
+
 
     }
 
@@ -631,7 +637,7 @@ public class ToDoActivity extends AppCompatActivity {
 //                    .setPriority(NotificationCompat.PRIORITY_LOW)
 //                    .setCategory(NotificationCompat.CATEGORY_MESSAGE)
 //                    .setSound(null)
-//                    .setVisibility(NotificationCompat.VISIBILITY_SECRET)
+//     //               .setVisibility(NotificationCompat.VISIBILITY_SECRET)
 //                    .setOngoing(true);
 //
 //
@@ -645,16 +651,17 @@ public class ToDoActivity extends AppCompatActivity {
 //                // to handle the case where the user grants the permission. See the documentation
 //                // for ActivityCompat#requestPermissions for more details.
 //                return;
-//            }
-//            notificationManager.notify(1000, builder.build());
+//           }
+//           notificationManager.notify(1000, builder.build());
 //
 //            // Schedule a timer to check for expiration of current date and update the notification
 //            Timer timer = new Timer();
 //            timer.scheduleAtFixedRate(new TimerTask() {
 //                @Override
 //                public void run() {
+//                    currentDate1 = dateFormat.format(currentDate);
 //                    if (currentDate1.compareTo(nextDate) > 0) {
-//                        // Current date has expired, find the next upcoming date and update the notification
+//                       // Current date has expired, find the next upcoming date and update the notification
 //                        int newIndex = -1;
 //                        for (int i = index + 1; i < dates.size(); i++) {
 //                            if (dates.get(i).compareTo(currentDate1) > 0) {
@@ -669,10 +676,9 @@ public class ToDoActivity extends AppCompatActivity {
 //                            if (ActivityCompat.checkSelfPermission(ToDoActivity.this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
 //                                // TODO: Consider calling
 //                                //    ActivityCompat#requestPermissions
-//                                // here to request the missing permissions, and then overriding
+//                               // here to request the missing permissions, and then overriding
 //                                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-//                                //                                          int[] grantResults)
-//                                // to handle the case where the user grants the permission. See the documentation
+//                                //                                          int[] grantResults)                 // to handle the case where the user grants the permission. See the documentation
 //                                // for ActivityCompat#requestPermissions for more details.
 //                                return;
 //                            }
@@ -692,17 +698,7 @@ public class ToDoActivity extends AppCompatActivity {
 
 
     }
-    private void scheduleExpirationCheck() {
-        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
 
-        // Create a pending intent to start the expiration check service
-        Intent intent = new Intent(this, ExpirationCheckService.class);
-        PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_MUTABLE);
-
-        // Schedule the expiration check to run every minute
-        long intervalMillis = 1000 * 60;
-        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), intervalMillis, pendingIntent);
-    }
 }
 
 

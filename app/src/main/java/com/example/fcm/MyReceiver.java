@@ -1,37 +1,51 @@
 package com.example.fcm;
 
+import android.annotation.SuppressLint;
+import android.app.AlarmManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.Service;
-import android.content.ContentUris;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.os.Build;
-import android.os.IBinder;
+import android.util.Log;
+import android.widget.AutoCompleteTextView;
+import android.widget.EditText;
 
-import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.fcm.databinding.ActivityToDoBinding;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
-public class ExpirationCheckService extends Service {
-    Cursor t;
+public class MyReceiver extends BroadcastReceiver {
+    String title;
     Database db;
-    Date currentDate;
-    String currentDate1;
-    int index;
-    String nextDate;
+    Cursor t;
 
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        // Check for expiration
+    String currentDate1;
+    String nextDate;
+    Date currentDate;
+    int index;
+
+    @SuppressLint("Range")
+    public void onReceive(Context context, Intent intent) {
+        db=new Database(context);
         ///fixed notification
         ArrayList<String> dates = new ArrayList<>();
         t = db.getInfo("allTasks");
@@ -54,7 +68,7 @@ public class ExpirationCheckService extends Service {
             }
         }
 
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Create the notification channel for Android Oreo and higher
             NotificationChannel channel = new NotificationChannel("channel_id", "CHANNEL_NAME", NotificationManager.IMPORTANCE_HIGH);
@@ -69,31 +83,43 @@ public class ExpirationCheckService extends Service {
         // Create a notification with the details of the next upcoming date
         if (index != -1) {
             nextDate = dates.get(index);
-            String message = "Next Schedule : " + nextDate.toString();
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "channel_id")
+            SQLiteDatabase sqLiteDatabase=this.db.getReadableDatabase();
+            String[] columns = {"title"};
+            String selection = "dueDate = ?";
+            String[] selectionArgs = {nextDate};
+
+            Cursor cursor = sqLiteDatabase.query("allTasks", columns, selection, selectionArgs, null, null, null);
+            if (cursor.moveToFirst()) {
+                do {
+                    title = cursor.getString(cursor.getColumnIndex("title"));
+                    // do something with the title
+                } while (cursor.moveToNext());
+            }
+
+
+            String message = "Next Task : " + title + "\nScheduled on : " + nextDate;
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "channel_id")
                     .setContentTitle("Upcoming Date")
                     .setContentText(message)
                     .setSmallIcon(R.drawable.ic_add_tasks)
-                    .setPriority(NotificationCompat.PRIORITY_LOW)
                     .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                     .setSound(null)
                     .setVisibility(NotificationCompat.VISIBILITY_SECRET)
                     .setOngoing(true);
 
 
+            if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return;
+            }
             notificationManager.notify(1000, builder.build());
-
-
-
         }
 
-        // Stop the service once it has finished its work
-        stopSelf();
-        return START_NOT_STICKY;
-    }
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
     }
 }
