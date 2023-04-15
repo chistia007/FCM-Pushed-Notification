@@ -19,5 +19,13 @@
         android:layout_height="wrap_content"
         android:id="@+id/seekBar"
         android:max="255"/>
+    <Switch
+        android:padding="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/switchAlwaysOn"
+        android:text="Always on notification for recent To-Dos"
+        android:checked="false"
+        />
 
 </LinearLayout>

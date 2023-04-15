@@ -18,6 +18,7 @@ import android.app.NotificationManager;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.app.AlarmManager;
@@ -43,6 +44,7 @@ import android.widget.Toast;
 import com.example.fcm.databinding.ActivityToDoBinding;
 import com.google.android.material.navigation.NavigationView;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -65,6 +67,7 @@ public class ToDoActivity extends AppCompatActivity {
     EditText titleEditText;
     EditText descriptionEditText;
     EditText dueDateEditText;
+    String dueDate;
     AutoCompleteTextView dropDowns;
     AlarmManager alarmManager;
 
@@ -83,11 +86,8 @@ public class ToDoActivity extends AppCompatActivity {
     Calendar calendar;
     public static final String ACTION_DATA_UPDATED = "com.example.fcm.ACTION_DATA_UPDATED";
     Boolean doneChecked = false;
-    String currentDate1;
-    String nextDate;
-    Date currentDate;
-    int index;
-
+    long line0;
+    int line4;
 
     @SuppressLint({"NotifyDataSetChanged", "ShortAlarm"})
     @Override
@@ -120,11 +120,11 @@ public class ToDoActivity extends AppCompatActivity {
                 @Override
                 public void onItemClick(View view, int position) {
                     Task task = tasks.get(position);
-                    long line0 = task.get_id(position);
+                    line0 = task.get_id(position);
                     String line1 = task.getTitle();
                     String line2 = task.getDescription();
                     String line3 = task.getDueDate();
-                    int line4 = task.getCorrespondingTableId();
+                    line4 = task.getCorrespondingTableId();
                     String line5 = task.getCorrespondingTable();
                     UpdateTaskInDialog(line0, line1, line2, line3, line4, line5);
                 }
@@ -189,13 +189,6 @@ public class ToDoActivity extends AppCompatActivity {
 
         updateUI(selectTable);
 
-        Intent intent = new Intent(ToDoActivity.this, MyReceiver.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(ToDoActivity.this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
-
-        AlarmManager alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
-        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 10 * 1000, pendingIntent);
-
-
     }
 
     private void updateUI(String selectTable) {
@@ -258,28 +251,33 @@ public class ToDoActivity extends AppCompatActivity {
                 case R.id.officeWorks:
                     navigation_clicked = false;
                     binding.bucketName.setText("OFFICE");
-                    updateUI("office");
+                    selectTable="office";
+                    updateUI(selectTable);
                     break;
                 case R.id.houseWork:
                     navigation_clicked = false;
                     binding.bucketName.setText("HOUSE");
-                    updateUI("house");
+                    selectTable="house";
+                    updateUI(selectTable);
                     break;
                 case R.id.learning:
                     navigation_clicked = false;
                     binding.bucketName.setText("LEARNING");
-                    updateUI("learning");
+                    selectTable="learning";
+                    updateUI(selectTable);
                     break;
                 case R.id.extra_curr:
                     navigation_clicked = false;
                     binding.bucketName.setText("EXTRA CURRICULUM");
-                    updateUI("extra");
+                    selectTable="extra";
+                    updateUI(selectTable);
                     break;
                 case R.id.done_tasks:
                     navigation_clicked = false;
                     doneChecked = true;
                     binding.bucketName.setText("DONE TASKS");
-                    updateUI("doneTasks");
+                    selectTable="doneTasks";
+                    updateUI(selectTable);
                     break;
                 case R.id.settings:
                     startActivity(new Intent(ToDoActivity.this, SettingsActivity.class));
@@ -287,7 +285,8 @@ public class ToDoActivity extends AppCompatActivity {
                 default:
                     navigation_clicked = true;
                     binding.bucketName.setText("ALL TASKS");
-                    updateUI("allTasks");
+                    selectTable="allTasks";
+                    updateUI(selectTable);
                     break;
             }
 
@@ -335,7 +334,7 @@ public class ToDoActivity extends AppCompatActivity {
 
                 taskTitle = titleEditText.getText().toString();
                 taskDescription = descriptionEditText.getText().toString();
-                String dueDate = dueDateEditText.getText().toString();
+                dueDate = dueDateEditText.getText().toString();
                 selectTable = dropDowns.getText().toString();
                 if (selectTable.equals("")) {
                     selectTable = "allTasks";
@@ -352,7 +351,11 @@ public class ToDoActivity extends AppCompatActivity {
 
                 //setting reminder and sending the selected table so that we can delete it from the notification bar when we receive broadcast
                 if (!dueDate.equals("")) {
-                    setReminder(selectTable);
+                    try {
+                        setReminder(selectTable);
+                    } catch (ParseException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
 
 
@@ -416,23 +419,47 @@ public class ToDoActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private void setReminder(String selectTable) {
+    private void setReminder(String selectTable) throws ParseException {
         Intent intent = new Intent(ToDoActivity.this, AlarmReceiver.class);
         intent.putExtra("taskTitle", taskTitle);
         intent.putExtra("taskDescription", taskDescription);
         intent.putExtra("tableName", selectTable);
         intent.putExtra("dueDate", dueDateBroadcast);
-        int id2 = db.getMaxRowNumber(selectTable);
-        int id1 = db.getMaxRowNumber("allTasks");
-
+        int id1 = db.getLastAutoGeneratedKey("allTasks")-1;
+        int id2 = db.getLastAutoGeneratedKey(selectTable)-1;
+        Log.d("123123", "setReminder: 123123$"+id1+ "@"+id2);
         intent.putExtra("id1", id1);
         intent.putExtra("id2", id2);
 
         PendingIntent pendingIntent = PendingIntent.getBroadcast(ToDoActivity.this, id1, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
 
         // Set the alarm
+        if(calendar!=null) {
 
-        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
+        }
+        else{
+            if (dueDate!="") {
+                if (selectTable=="allTasks"){
+                    intent.putExtra("id1", line0);
+                    intent.putExtra("id2", line4);
+                    pendingIntent = PendingIntent.getBroadcast(ToDoActivity.this, (int)line0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+                }
+                else {
+                    intent.putExtra("id1", line4);
+                    intent.putExtra("id2", line0);
+                    pendingIntent = PendingIntent.getBroadcast(ToDoActivity.this, line4, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+                }
+
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+                Date date = dateFormat.parse(dueDate);
+                calendar = Calendar.getInstance();
+                calendar.setTime(date);
+                alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
+            }
+
+        }
 
 
     }
@@ -450,14 +477,6 @@ public class ToDoActivity extends AppCompatActivity {
         descriptionEditText = view.findViewById(R.id.edit_text_description);
         dueDateEditText = view.findViewById(R.id.edit_text_due_date);
         dropDowns = view.findViewById(R.id.dropDownText);
-
-//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-//        LocalDateTime dateTime = LocalDateTime.parse("2023-04-01 19:02", formatter);
-//        int year = dateTime.getYear();
-//        int month = dateTime.getMonthValue();
-//        int day = dateTime.getDayOfMonth();
-//        int hour = dateTime.getHour();
-//        int minute = dateTime.getMinute();
 
         dropDownMenu();
         // setting texts to edittext when user click an item on recyclerview
@@ -479,7 +498,7 @@ public class ToDoActivity extends AppCompatActivity {
 
                 taskTitle = titleEditText.getText().toString();
                 taskDescription = descriptionEditText.getText().toString();
-                String dueDate = dueDateEditText.getText().toString();
+                dueDate = dueDateEditText.getText().toString();
                 selectTable = dropDowns.getText().toString();
 
                 if (taskTitle.equals("")) {
@@ -501,7 +520,11 @@ public class ToDoActivity extends AppCompatActivity {
                 }
 
                 if (!dueDate.equals("")) {
-                    setReminder(selectTable);
+                    try {
+                        setReminder(selectTable);
+                    } catch (ParseException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
 
 
@@ -590,112 +613,6 @@ public class ToDoActivity extends AppCompatActivity {
         int[] appWidgetIds = appWidgetManager.getAppWidgetIds(componentName);
         My_Widget m = new My_Widget();
         m.onUpdate(context, appWidgetManager, appWidgetIds);
-
-
-        ///fixed notification
-//        ArrayList<String> dates = new ArrayList<>();
-//        t = db.getInfo("allTasks");
-//        while (t.moveToNext()) {
-//            if (!t.getString(3).equals("")) {
-//                dates.add(t.getString(3));
-//            }
-//        }
-//        Collections.sort(dates);
-//        currentDate = new Date();
-//        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-//        currentDate1 = dateFormat.format(currentDate);
-//
-//        // Find the index of the next upcoming date
-//        index = -1;
-//        for (int i = 0; i < dates.size(); i++) {
-//            if (dates.get(i).compareTo(currentDate1) > 0) {
-//                index = i;
-//                break;
-//            }
-//        }
-//
-//        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-//            // Create the notification channel for Android Oreo and higher
-//            NotificationChannel channel = new NotificationChannel("channel_id", "CHANNEL_NAME", NotificationManager.IMPORTANCE_HIGH);
-//            channel.setDescription("CHANNEL_DESCRIPTION");
-//            channel.enableLights(true);
-//            channel.setLightColor(Color.GREEN);
-//            channel.setSound(null,null);
-//            notificationManager.createNotificationChannel(channel);
-//        }
-//
-//
-//        // Create a notification with the details of the next upcoming date
-//        if (index != -1) {
-//            nextDate = dates.get(index);
-//            String message = "Next Schedule : " + nextDate.toString();
-//            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "channel_id")
-//                    .setContentTitle("Upcoming Date")
-//                    .setContentText(message)
-//                    .setSmallIcon(R.drawable.ic_add_tasks)
-//                    .setPriority(NotificationCompat.PRIORITY_LOW)
-//                    .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-//                    .setSound(null)
-//     //               .setVisibility(NotificationCompat.VISIBILITY_SECRET)
-//                    .setOngoing(true);
-//
-//
-//
-//            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-//                // TODO: Consider calling
-//                //    ActivityCompat#requestPermissions
-//                // here to request the missing permissions, and then overriding
-//                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-//                //                                          int[] grantResults)
-//                // to handle the case where the user grants the permission. See the documentation
-//                // for ActivityCompat#requestPermissions for more details.
-//                return;
-//           }
-//           notificationManager.notify(1000, builder.build());
-//
-//            // Schedule a timer to check for expiration of current date and update the notification
-//            Timer timer = new Timer();
-//            timer.scheduleAtFixedRate(new TimerTask() {
-//                @Override
-//                public void run() {
-//                    currentDate1 = dateFormat.format(currentDate);
-//                    if (currentDate1.compareTo(nextDate) > 0) {
-//                       // Current date has expired, find the next upcoming date and update the notification
-//                        int newIndex = -1;
-//                        for (int i = index + 1; i < dates.size(); i++) {
-//                            if (dates.get(i).compareTo(currentDate1) > 0) {
-//                                newIndex = i;
-//                                break;
-//                            }
-//                        }
-//                        if (newIndex != -1) {
-//                            String newNextDate = dates.get(newIndex);
-//                            String newMessage = "Next date: " + newNextDate.toString();
-//                            builder.setContentText(newMessage);
-//                            if (ActivityCompat.checkSelfPermission(ToDoActivity.this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-//                                // TODO: Consider calling
-//                                //    ActivityCompat#requestPermissions
-//                               // here to request the missing permissions, and then overriding
-//                                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-//                                //                                          int[] grantResults)                 // to handle the case where the user grants the permission. See the documentation
-//                                // for ActivityCompat#requestPermissions for more details.
-//                                return;
-//                            }
-//                            notificationManager.notify(1000, builder.build());
-//                            nextDate = newNextDate;
-//                            index = newIndex;
-//                        } else {
-//                            // No more upcoming dates, cancel the notification
-//                            notificationManager.cancel(1000);
-//                            timer.cancel();
-//                        }
-//                    }
-//                }
-//            }, 0, 1000 * 60); // Check every minute for expiration of current date
-//        }
-
-
 
     }
 

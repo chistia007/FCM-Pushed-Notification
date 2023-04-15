@@ -31,7 +31,6 @@ public class AlarmReceiver extends BroadcastReceiver {
     @SuppressLint("MissingPermission")
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.d("Meowwwwwwwwww", "onReceive: 1234234213213421");
         // Get the task information from the intent
         taskTitle = intent.getStringExtra("taskTitle");
         taskDescription = intent.getStringExtra("taskDescription");
@@ -88,13 +87,9 @@ public class AlarmReceiver extends BroadcastReceiver {
                 .addAction(visitAction)
                 .addAction(doneAction)
                 .setAutoCancel(true);
-        Random rand = new Random();
 
-        int minRange = 1, maxRange= 999;
-        int value = rand.nextInt(maxRange - minRange) + minRange;
-        if(value==1000){value=1;}
 
-        notificationManager.notify(value, builder.build());
+        notificationManager.notify(id1, builder.build());
     }
 }
 

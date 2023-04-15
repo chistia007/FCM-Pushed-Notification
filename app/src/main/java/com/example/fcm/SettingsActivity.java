@@ -3,9 +3,12 @@ package com.example.fcm;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Layout;
@@ -15,18 +18,24 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.RemoteViews;
 import android.widget.SeekBar;
+import android.widget.Toast;
+
+import com.example.fcm.databinding.ActivitySettingsBinding;
 
 public class SettingsActivity extends AppCompatActivity {
+    ActivitySettingsBinding binding;
     private static final String PREFS_NAME = "MyPrefs";
     private static final String ALPHA_KEY = "alpha";
 
     private SeekBar seekBar;
     private float alpha;
+    Boolean alwaysOnNotification;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_settings);
+        binding=ActivitySettingsBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         seekBar = findViewById(R.id.seekBar);
 
@@ -59,6 +68,46 @@ public class SettingsActivity extends AppCompatActivity {
             public void onStopTrackingTouch(SeekBar seekBar) {
             }
         });
+
+
+        binding.switchAlwaysOn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (binding.switchAlwaysOn.isChecked()){
+                    alwaysOnNotification=true;
+                    SharedPreferences.Editor editor = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit();
+                    editor.putBoolean("alwaysOnNotificationValue", alwaysOnNotification);
+                    editor.apply();
+                    Intent intent = new Intent(SettingsActivity.this, MyReceiver.class);
+                    PendingIntent pendingIntent = PendingIntent.getBroadcast(SettingsActivity.this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+
+                    AlarmManager alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+                    alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 10 * 1000, pendingIntent);
+                }
+                else{
+                    SharedPreferences.Editor editor = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit();
+                    editor.putBoolean("alwaysOnNotificationValue", false);
+                    editor.apply();
+                    Intent intent = new Intent(SettingsActivity.this, MyReceiver.class);
+                    PendingIntent pendingIntent = PendingIntent.getBroadcast(SettingsActivity.this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+
+                    AlarmManager alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+                    alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 10 * 1000, pendingIntent);
+
+                }
+
+            }
+        });
+
+        prefs = getSharedPreferences("MyPrefs", MODE_PRIVATE);
+        Boolean  alwaysOnNotificationValue= prefs.getBoolean("alwaysOnNotificationValue", false);
+        if (alwaysOnNotificationValue) {
+            binding.switchAlwaysOn.setChecked(true);
+        }
+        else{
+            binding.switchAlwaysOn.setChecked(false);
+        }
+
     }
 
     @Override

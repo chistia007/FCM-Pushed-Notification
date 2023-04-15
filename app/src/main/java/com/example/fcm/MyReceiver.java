@@ -7,6 +7,7 @@ import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -79,9 +80,10 @@ public class MyReceiver extends BroadcastReceiver {
             notificationManager.createNotificationChannel(channel);
         }
 
-
+        SharedPreferences prefs = context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
+        Boolean  alwaysOnNotificationValue= prefs.getBoolean("alwaysOnNotificationValue", false);
         // Create a notification with the details of the next upcoming date
-        if (index != -1) {
+        if (index != -1 && alwaysOnNotificationValue) {
             nextDate = dates.get(index);
             SQLiteDatabase sqLiteDatabase=this.db.getReadableDatabase();
             String[] columns = {"title"};
@@ -103,7 +105,6 @@ public class MyReceiver extends BroadcastReceiver {
                     .setContentText(message)
                     .setSmallIcon(R.drawable.ic_add_tasks)
                     .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-                    .setSound(null)
                     .setVisibility(NotificationCompat.VISIBILITY_SECRET)
                     .setOngoing(true);
 
@@ -118,7 +119,12 @@ public class MyReceiver extends BroadcastReceiver {
                 // for ActivityCompat#requestPermissions for more details.
                 return;
             }
-            notificationManager.notify(1000, builder.build());
+            notificationManager.notify(10000000, builder.build());
+        }
+        else {
+            // No more upcoming dates, cancel the notification
+            notificationManager.cancel(1000);
+
         }
 
     }
