@@ -72,18 +72,19 @@ public class MyReceiver extends BroadcastReceiver {
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Create the notification channel for Android Oreo and higher
-            NotificationChannel channel = new NotificationChannel("channel_id", "CHANNEL_NAME", NotificationManager.IMPORTANCE_HIGH);
+            NotificationChannel channel = new NotificationChannel("channel_id", "CHANNEL_NAME", NotificationManager.IMPORTANCE_LOW);
             channel.setDescription("CHANNEL_DESCRIPTION");
             channel.enableLights(true);
             channel.setLightColor(Color.GREEN);
             channel.setSound(null, null);
+            channel.enableVibration(false);
             notificationManager.createNotificationChannel(channel);
         }
 
-        SharedPreferences prefs = context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
-        Boolean  alwaysOnNotificationValue= prefs.getBoolean("alwaysOnNotificationValue", false);
+//        SharedPreferences prefs = context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
+//        Boolean  alwaysOnNotificationValue= prefs.getBoolean("alwaysOnNotificationValue", false);
         // Create a notification with the details of the next upcoming date
-        if (index != -1 && alwaysOnNotificationValue) {
+        if (index != -1) {
             nextDate = dates.get(index);
             SQLiteDatabase sqLiteDatabase=this.db.getReadableDatabase();
             String[] columns = {"title"};
@@ -106,6 +107,7 @@ public class MyReceiver extends BroadcastReceiver {
                     .setSmallIcon(R.drawable.ic_add_tasks)
                     .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                     .setVisibility(NotificationCompat.VISIBILITY_SECRET)
+                    .setPriority(NotificationCompat.PRIORITY_LOW)
                     .setOngoing(true);
 
 
@@ -123,7 +125,7 @@ public class MyReceiver extends BroadcastReceiver {
         }
         else {
             // No more upcoming dates, cancel the notification
-            notificationManager.cancel(1000);
+            notificationManager.cancel(10000000);
 
         }
 

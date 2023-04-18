@@ -1,9 +1,11 @@
 package com.example.fcm;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationManagerCompat;
 
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
@@ -29,7 +31,9 @@ public class SettingsActivity extends AppCompatActivity {
 
     private SeekBar seekBar;
     private float alpha;
-    Boolean alwaysOnNotification;
+    Intent intent;
+    PendingIntent pendingIntent;
+    AlarmManager alarmManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +48,8 @@ public class SettingsActivity extends AppCompatActivity {
         alpha = prefs.getFloat(ALPHA_KEY, 1.0f);
         seekBar.setProgress((int) (alpha * 255));
 
+
+
         // Get the widget's RemoteViews
         RemoteViews remoteViews = new RemoteViews(getPackageName(), R.layout.my__widget);
 
@@ -53,6 +59,7 @@ public class SettingsActivity extends AppCompatActivity {
                 alpha = (float) progress / 255;
                 // Set the alpha value of the widget's RemoteViews
                 remoteViews.setFloat(R.id.widgetLayout, "setAlpha", alpha);
+                remoteViews.setFloat(R.id.totalTodos,"setAlpha",1.0f);
 
                 // Update the widget
                 AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(SettingsActivity.this);
@@ -73,26 +80,27 @@ public class SettingsActivity extends AppCompatActivity {
         binding.switchAlwaysOn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                intent = new Intent(SettingsActivity.this, MyReceiver.class);
+                pendingIntent = PendingIntent.getBroadcast(SettingsActivity.this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+                alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
                 if (binding.switchAlwaysOn.isChecked()){
-                    alwaysOnNotification=true;
+                    Toast.makeText(SettingsActivity.this, "aaa", Toast.LENGTH_SHORT).show();
+                    Log.d("11", "onClick: 11");
                     SharedPreferences.Editor editor = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit();
-                    editor.putBoolean("alwaysOnNotificationValue", alwaysOnNotification);
+                    editor.putBoolean("alwaysOnNotificationValue", true);
                     editor.apply();
-                    Intent intent = new Intent(SettingsActivity.this, MyReceiver.class);
-                    PendingIntent pendingIntent = PendingIntent.getBroadcast(SettingsActivity.this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
-
-                    AlarmManager alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
                     alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 10 * 1000, pendingIntent);
+
                 }
                 else{
+                    Log.d("33", "onClick: 11");
                     SharedPreferences.Editor editor = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit();
                     editor.putBoolean("alwaysOnNotificationValue", false);
                     editor.apply();
-                    Intent intent = new Intent(SettingsActivity.this, MyReceiver.class);
-                    PendingIntent pendingIntent = PendingIntent.getBroadcast(SettingsActivity.this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
-
-                    AlarmManager alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
-                    alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 10 * 1000, pendingIntent);
+                    alarmManager.cancel(pendingIntent);
+                    pendingIntent.cancel();
+                    NotificationManagerCompat notificationManager= NotificationManagerCompat.from(SettingsActivity.this);
+                    notificationManager.cancel(10000000);
 
                 }
 
@@ -101,11 +109,13 @@ public class SettingsActivity extends AppCompatActivity {
 
         prefs = getSharedPreferences("MyPrefs", MODE_PRIVATE);
         Boolean  alwaysOnNotificationValue= prefs.getBoolean("alwaysOnNotificationValue", false);
+
         if (alwaysOnNotificationValue) {
             binding.switchAlwaysOn.setChecked(true);
         }
         else{
             binding.switchAlwaysOn.setChecked(false);
+
         }
 
     }

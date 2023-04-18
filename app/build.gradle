@@ -15,6 +15,11 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+
+        // Add the following lines for notification permission
+        manifestPlaceholders = [onesignal_app_id: "YOUR_ONESIGNAL_APP_ID", onesignal_google_project_number: "YOUR_GOOGLE_PROJECT_NUMBER"]
+
     }
 
     buildTypes {

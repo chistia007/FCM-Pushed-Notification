@@ -1,17 +1,12 @@
 package com.example.fcm;
-
-import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
-import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.util.Log;
 import android.widget.RemoteViews;
-import android.widget.SimpleCursorAdapter;
 
 public class My_Widget extends AppWidgetProvider {
     Database db;

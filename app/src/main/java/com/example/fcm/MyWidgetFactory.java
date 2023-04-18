@@ -51,7 +51,7 @@ public class MyWidgetFactory implements RemoteViewsService.RemoteViewsFactory {
     @Override
     public RemoteViews getViewAt(int position) {
         // Move the cursor to the correct position
-        cursor.moveToPosition(position);
+        cursor.moveToPosition(cursor.getCount() - position - 1); //the cursor in the reverse position of the given position
 
         // Get the data from the cursor
         String title = cursor.getString(cursor.getColumnIndex("title"));

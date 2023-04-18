@@ -7,11 +7,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -88,6 +90,7 @@ public class ToDoActivity extends AppCompatActivity {
     Boolean doneChecked = false;
     long line0;
     int line4;
+    private static final int NOTIFICATION_PERMISSION_CODE = 123;
 
     @SuppressLint({"NotifyDataSetChanged", "ShortAlarm"})
     @Override
@@ -95,6 +98,12 @@ public class ToDoActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityToDoBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        // Check if notification permission is granted
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            // Request permission
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION_CODE);
+        }
 
 
 
@@ -132,7 +141,6 @@ public class ToDoActivity extends AppCompatActivity {
                 //Delete operation
 
                 @Override
-
                 public void onCheckboxClick(View view, int position, boolean isChecked) {
                     Task task = tasks.get(position);
                     task.setComplete(isChecked);
@@ -602,6 +610,20 @@ public class ToDoActivity extends AppCompatActivity {
         dropDowns.setAdapter(adapter);
     }
 
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == NOTIFICATION_PERMISSION_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+            } else {
+                // Permission denied, handle accordingly
+                Toast.makeText(this, "Allow permission to get notified from settings", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+    @SuppressLint("NotifyDataSetChanged")
     @Override
     protected void onPause() {
         super.onPause();

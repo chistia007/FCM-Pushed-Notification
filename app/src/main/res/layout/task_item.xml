@@ -8,12 +8,6 @@
     android:layout_marginRight="5dp"
     android:layout_marginLeft="5dp"
     android:id="@+id/item">
-    <View
-        android:layout_width="1dp"
-        android:layout_height="20dp"
-        android:background="#858080"
-        android:layout_toStartOf="@id/task_checkbox"
-        android:layout_centerVertical="true"/>
 
     <CheckBox
         android:id="@+id/task_checkbox"
